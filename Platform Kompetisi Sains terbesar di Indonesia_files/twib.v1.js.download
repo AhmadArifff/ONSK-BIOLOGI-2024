@@ -1,0 +1,208 @@
+const canvastwb = document.getElementById('canvastwb');
+const ctxtwb = canvastwb.getContext('2d');
+var backgroundTwb = '',
+    faceurl = '';
+var hrs = 0,
+    ver = 0,
+    zoom = 0,
+    doubletab = 0;
+
+
+window.addEventListener('resize', function(event) {
+    adjustTwb();
+}, true);
+
+
+function adjustTwb(){
+    let lebarScreen = screen.width;
+    if(lebarScreen <= 500){
+        SFR('.formtwb').css({
+            width:lebarScreen + 'px',
+            height : (lebarScreen + 50)+'px',
+            'margin-left': -lebarScreen/2 + 'px',
+            'margin-top':- (lebarScreen+50)/2 + 'px'
+        })
+    }
+}
+
+function loadimage(src){
+    showload();
+    doubletab = 2;
+    adjustTwb();
+    ctxtwb.canvas.width = (screen.width>500? 500: screen.width);
+    ctxtwb.canvas.height =(screen.width>500? 500: screen.width);
+    backgroundTwb = src;
+    let  img = new Image();
+    img.onload = function(e) {
+        ctxtwb.canvas.height = img.height;
+        ctxtwb.canvas.width = img.width;
+        ctxtwb.imageSmoothingEnabled = false;
+        ctxtwb.drawImage(img, 0, 0, canvastwb.width, canvastwb.height);
+        ctxtwb.canvas.style.imageRendering = 'auto';
+        hideload();
+    };
+    img.src = src;
+}
+
+
+SFR('#importtwb').on('change', function(e){
+    hrs = 0;
+    ver = 0;
+    zoom = 1;
+    let face = e.target.files[0];
+    readFileAsUrl(face, function(resp){
+        faceurl = resp;
+
+        ctxtwb.canvas.width = (screen.width>500? 500: screen.width);
+        ctxtwb.canvas.height =(screen.width>500? 500: screen.width);
+        beginRender(faceurl, backgroundTwb);
+    })
+});
+
+function beginRender(faceurl, backtwb){
+    ctxtwb.canvas.width = (screen.width>500? 500: screen.width);
+    ctxtwb.canvas.height =(screen.width>500? 500: screen.width);
+    let img1 = new Image();
+        img1.src = faceurl;
+        img1.onload = function(e){
+
+            let imgW = img1.width,
+                imgH = img1.height;
+            let scrW = canvastwb.width,
+                scrH = canvastwb.height;
+            let scaleX = scrW/ imgW,
+                scaleY = scrH / imgH,
+                scale = (scaleX < scaleY ? scaleY : scaleX);
+                imgH = imgH * scale;
+                imgW = imgW * scale;
+                hrs = (scrW - imgW)/2
+                ver = (scrH - imgH)/2
+            ctxtwb.drawImage(img1, 0, 0 ,img1.width, img1.height, hrs, ver, imgW, imgH);
+            let img2 = new Image();
+            img2.src = backtwb;
+            img2.onload = function(e){
+                ctxtwb.drawImage(img2, 0, 0, canvastwb.width, canvastwb.height);
+            }
+    }
+}
+
+
+
+function renderTwibbon(faceurl, backtwb){
+    ctxtwb.canvas.width = (screen.width>500? 500: screen.width);
+    ctxtwb.canvas.height =(screen.width>500? 500: screen.width);
+    let img1 = new Image();
+        img1.src = faceurl;
+        img1.onload = function(e){
+
+            let imgW = img1.width,
+                imgH = img1.height;
+            let scrW = canvastwb.width,
+                scrH = canvastwb.height;
+            let scaleX = scrW/ imgW,
+                scaleY = scrH / imgH,
+                scale = (scaleX < scaleY ? scaleY : scaleX);
+                imgH = imgH * scale;
+                imgW = imgW * scale;
+
+
+                let imgZW = imgW * zoom,
+                    addImgZW = (imgZW - imgW),
+                    margZW = addImgZW/2;
+                    
+                let imgZH = imgH * zoom,
+                    addImgZH = (imgZH - imgH),
+                    margZH = addImgZH/2;
+            ctxtwb.drawImage(img1, 0, 0 ,img1.width, img1.height, hrs-margZW, ver - margZH, imgW+addImgZW, imgH+addImgZH);
+            let img2 = new Image();
+            img2.src = backtwb;
+            img2.onload = function(e){
+                ctxtwb.drawImage(img2, 0, 0, canvastwb.width, canvastwb.height);
+            }
+    }
+}
+
+SFR('#kiri').on('click', function(){
+    hrs = hrs - 10;
+    renderTwibbon(faceurl, backgroundTwb);
+});
+
+SFR('#kanan').on('click', function(){
+    hrs = hrs + 10;
+    renderTwibbon(faceurl, backgroundTwb);
+});
+
+SFR('#atas').on('click', function(){
+    ver = ver - 10;
+    renderTwibbon(faceurl, backgroundTwb);
+});
+
+SFR('#bawah').on('click', function(){
+    ver = ver + 10;
+    renderTwibbon(faceurl, backgroundTwb);
+});
+
+SFR('#zoomp').on('click', function(){
+    zoom = zoom * 1.1;
+    renderTwibbon(faceurl, backgroundTwb);
+});
+
+SFR('#zoomm').on('click', function(){
+    zoom = zoom/1.1;
+    renderTwibbon(faceurl, backgroundTwb);
+});
+
+SFR('.twbright').children()[0].on('click', function(){
+    if(faceurl !=''){
+        showload();
+        resizeBase64Image(canvastwb.toDataURL("image/png"), 1200, function(resp){
+            hideload();
+            // window.location.download = 'ahmad.png';
+            // window.location.href = resp.replace("image/png", "image/octet-stream");
+            let a = document.createElement('a');
+            a.href = resp.replace("image/png", "image/octet-stream")
+            a.download = filterAin(profiles.nama.toLowerCase().split(' ').join(''))+'.png';
+            document.body.appendChild(a);
+            a.click();
+        });
+    }
+    else{
+        showToast('Foto wajah anda belum diimport','error');
+    }
+});
+
+SFR(document).ready(function () {
+    let mousetwb_in = false;
+    SFR(".formtwb").on(
+      "mouseover",
+      function () {
+        mousetwb_in = true;
+      }
+    );
+    SFR(".formtwb").on(
+      "mouseout",
+      function () {
+        mousetwb_in = false;
+      }
+    );
+    window.addEventListener("mouseup", function () {
+        if(!mousetwb_in && window.getComputedStyle(SFR(".overlaytwb")[0])["display"] == "block"){
+            doubletab--;
+            if(doubletab>0){
+                showToast('Tap layar sekali lagi untuk menutup Twibbon', 'warning');
+            }
+            else{
+                SFR(".overlaytwb").hide();
+            }
+        }
+    });
+});
+
+SFR('.formtwb').on('click', function(){
+    doubletab = 2;
+})
+
+function twib(twbsrc){
+    SFR(".overlaytwb").show();
+    loadimage('resource.php?res='+twbsrc);
+}

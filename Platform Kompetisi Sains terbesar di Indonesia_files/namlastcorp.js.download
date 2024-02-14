@@ -1,0 +1,299 @@
+class ElementCollection extends Array {
+    ready(cb) {
+        const isReady = this.some(e => {
+            return e.readyState != null && e.readyState != "loading"
+        })
+        if (isReady) {
+            cb()
+        } else {
+            this.on("DOMContentLoaded", cb)
+        }
+        return this
+    }
+
+    on(event, cbOrSelector, cb) {
+        if (typeof cbOrSelector === "function") {
+            this.forEach(e => {
+                e.addEventListener(event, cbOrSelector);
+            });
+        } else {
+            this.forEach(elem => {
+                
+                elem.addEventListener(event, e => {
+                    try{
+                        if(SFR(e.target).parent()[0].matches(cbOrSelector)){
+                            SFR(e.target).parent().on(event, cb);
+                        }
+                        else if( SFR(e.target).parent().parent()[0].matches(cbOrSelector)){
+                            SFR(e.target).parent().parent().on(event, cb);
+                        }
+                        else if(SFR(e.target)[0].matches(cbOrSelector)){
+                            SFR(e.target).on(event, cb);
+                        }
+                    }
+                    catch(err) {
+
+                    }
+                })
+            });
+        }
+        return this
+    }
+
+    removeClass(className) {
+        this.forEach(e => e.classList.remove(className))
+        return this
+    }
+
+    addClass(className) {
+        this.forEach(e => e.classList.add(className))
+        return this
+    }
+
+    css(object) {
+        for (const key in object) {
+            const camelProp = key.replace(/(-[a-z])/, g => {
+                return g.replace("-", "").toUpperCase()
+            })
+            this.forEach(e => (e.style[camelProp] = object[key]));
+        }
+        return this
+    }
+    animate(object, duration, cb) {
+        this.forEach(e => (e.style['transition'] = (duration/1000) + 's'));
+        setTimeout(()=>{
+            for (const key in object) {
+                const camelProp = key.replace(/(-[a-z])/, g => {
+                    return g.replace("-", "").toUpperCase()
+                })
+                this.forEach(e => (e.style[camelProp] = object[key]));
+            }
+        },30);
+        setTimeout(()=>{
+            this.forEach(e => (e.style['transition'] = '0s'));
+            cb(true);
+        }, duration);
+        return this
+    }
+    delay(dur, cb) {
+        setTimeout(() => {
+            cb(this);
+        }, dur)
+        return this;
+    }
+    children() {
+        let anak = []
+        for (let i = 0; i < this[0].children.length; i++) {
+            anak.push(new ElementCollection(this[0].children[i]));
+        }
+        return anak;
+    }
+    parent() {
+        return new ElementCollection(this[0].parentNode);
+    }
+    childrenInside() {
+        let anak = []
+        for (let i = 0; i < this[0].children.length; i++) {
+            anak.push(this[0].children[i]);
+        }
+        return anak;
+    }
+    html(tag) {
+        this.forEach(e => e.innerHTML = tag);
+        return this;
+    }
+    append(tag) {
+        this.forEach(e => e.innerHTML = e.innerHTML + tag);
+        return this
+    }
+    prepend(tag) {
+        this.forEach(e => e.innerHTML = tag + e.innerHTML);
+        return this
+    }
+    addChild(child) {
+        this.forEach(e => e.appendChild(child));
+        // this[0].appendChild(child);
+        return this
+    }
+    setAttr(attribute, value) {
+        this.forEach(e => e.setAttribute(attribute, value));
+        // this[0].setAttribute(attribute, value);
+        return this;
+    }
+    getAttr(component) {
+        return this[0].getAttribute(component);
+    }
+    text(text) {
+        this.forEach(e => e.innerText = text);
+        // this[0].innerText = text;
+        return this;
+    }
+    hide() {
+        this.forEach(e => new ElementCollection(e).css({ 'display': 'none' }));
+        // this.css({ 'display': 'none' });
+        return this;
+    }
+    show() {
+        this.forEach(e => new ElementCollection(e).css({ 'display': 'block' }));
+        // this.css({ 'display': 'block' });
+        return this
+    }
+    opacity(level) {
+        this.forEach(e => new ElementCollection(e).css({ 'opacity': (level > 1 ? 1 : (level < 0 ? 0 : level)) }));
+        // this.css({ 'opacity': (level > 1 ? 1 : (level < 0 ? 0 : level)) })
+        return this
+    }
+    offset() {
+        let box = this[0].getBoundingClientRect();
+
+        let body = document.body;
+        let docEl = document.documentElement;
+
+        let scrollTop = window.pageYOffset || docEl.scrollTop || body.scrollTop;
+        let scrollLeft = window.pageXOffset || docEl.scrollLeft || body.scrollLeft;
+
+        let clientTop = docEl.clientTop || body.clientTop || 0;
+        let clientLeft = docEl.clientLeft || body.clientLeft || 0;
+
+
+        let top = box.top + scrollTop - clientTop;
+        let left = box.left + scrollLeft - clientLeft;
+
+        return { top: top, left: left };
+    }
+    width() {
+        return this[0].getBoundingClientRect().width
+    }
+    height() {
+        return this[0].getBoundingClientRect().height
+    }
+    scrollTop() {
+        return this[0].scrollTop;
+    }
+    scrollLeft() {
+        return this[0].scrollLeft;
+    }
+    click() {
+        this[0].click();
+        return this;
+    }
+    value() {
+        return this[0].value .replace(/["']/g, "de34ed")
+        .replace(/(\r\n|\n|\r)/gm, "")
+        .replace(/\\/g, "");
+    }
+    setValue(val){
+        this[0].value = val;
+        return this;
+    }
+    animateScrollTo(targetid, duration, cb = () => {}) {
+        scrollToElm(this[0], targetid[0], duration, cb);
+    }
+    delete(){
+        this[0].remove();
+    }
+}
+
+function SFR(param) {
+    if (typeof param === "string" || param instanceof String) {
+        return new ElementCollection(...document.querySelectorAll(param))
+    } else {
+        return new ElementCollection(param)
+    }
+}
+SFR.senggol = function(url, data = {}, success = () => {}) {
+    let formData = new FormData();
+    for (const key in data) {
+        formData.append(key, data[key]);
+    }
+
+    let xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (xmlhttp.status) {
+            if (xmlhttp.status == 200 && (xmlhttp.readyState == 4)) {
+                success(xmlhttp.responseText);
+              
+            }
+        }
+    }
+    xmlhttp.open("POST", url, true);
+    xmlhttp.send(formData);
+}
+
+SFR.senggolfile = function(url, success = () => {}) {
+    fetch(url,{
+        mode: 'cors',
+        headers: {
+            'Access-Control-Allow-Origin':'*'
+        }
+    })
+    .then(response => response.json())
+    .then(json => success(json));
+}
+
+SFR.senggolProgress = function(url, data = {}, progress = () => {}, success = () => {}) {
+    let formData = new FormData();
+    for (const key in data) {
+        formData.append(key, data[key]);
+    }
+
+    let xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (xmlhttp.status) {
+            if (xmlhttp.status == 200 && (xmlhttp.readyState == 4)) {
+                success(xmlhttp.responseText);
+            }
+        }
+    }
+    xmlhttp.upload.addEventListener("progress", function(event) {
+        progress(event);
+    });
+    xmlhttp.open("POST", url, true);
+    xmlhttp.send(formData);
+}
+function scrollToElmkhusus(container, elm, duration, cb) {
+    var pos = getRelativePos(elm, container);
+    scrollTo(container, pos.bottom, duration, cb); // duration in seconds
+}
+
+function scrollToElm(container, elm, duration, cb) {
+    var pos = getRelativePos(elm, container);
+    scrollTo(container, pos.top, duration, cb); // duration in seconds
+}
+
+function getRelativePos(elm, container) {
+    var pPos = container.getBoundingClientRect(), // parent pos
+        cPos = elm.getBoundingClientRect(), // target pos
+        pos = {};
+
+    pos.top = cPos.top - pPos.top + container.scrollTop,
+        pos.right = cPos.right - pPos.right,
+        pos.bottom = cPos.bottom - pPos.bottom,
+        pos.left = cPos.left - pPos.left;
+
+    return pos;
+}
+
+function scrollTo(element, to, duration, onDone) {
+    var start = element.scrollTop,
+        change = to - start,
+        startTime = performance.now(),
+        val, now, elapsed, t;
+
+    function animateScroll() {
+        now = performance.now();
+        elapsed = (now - startTime) / 1000;
+        t = (elapsed / (duration / 1000));
+
+        element.scrollTop = start + change * easeInOutQuad(t);
+
+        if (t < 1)
+            window.requestAnimationFrame(animateScroll);
+        else
+            onDone && onDone();
+    };
+
+    animateScroll();
+}
+
+function easeInOutQuad(t) { return t < .5 ? 2 * t * t : -1 + (4 - 2 * t) * t };

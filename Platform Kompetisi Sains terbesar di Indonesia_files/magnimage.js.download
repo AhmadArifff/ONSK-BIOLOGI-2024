@@ -1,0 +1,97 @@
+var head = document.querySelector('head'),
+    style = document.createElement('style');
+
+style.innerHTML = `
+
+.imagelayer {
+    position: fixed;
+    z-index: 1000000001;
+    width: 100px;
+    height: 100px;
+    left: 0;
+    top: 0;
+    margin: 0;
+    padding: 0;
+    transition: 0.3s;
+    display: none;
+}
+
+.overlay {
+    
+    position: fixed;
+    z-index: 1000000000;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    display: none;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.imagelayer img {
+    width: 100%;
+    height: 100%;
+}`;
+head.appendChild(style);
+
+var bodys = document.querySelector('body'),
+    overlay = document.createElement('div'),
+    imagelayer = document.createElement('div');
+
+overlay.className = 'overlay';
+imagelayer.className = 'imagelayer';
+bodys.appendChild(overlay);
+bodys.appendChild(imagelayer);
+
+class Magnimage {
+    constructor(dom, image, dimensi) {
+        this.dom = dom;
+        this.image = image;
+        this.dimensi = dimensi
+    }
+    showUp() {
+
+        var mydom = this.dom;
+        SFR('.imagelayer').html(`<img src="${this.image}"/>`);
+        SFR('.imagelayer').css({
+            'left': this.dom.offset().left + 'px',
+            'top': (this.dom.offset().top - window.pageYOffset) + 'px',
+            'width': this.dom.width() + 'px',
+            'height': this.dom.height() + 'px'
+        });
+        var kembali = {
+            left: this.dom.offset().left,
+            top: this.dom.offset().top -  window.pageYOffset,
+            width: this.dom.width(),
+            height: this.dom.height()
+        }
+        SFR('.imagelayer, .overlay').show();
+        setTimeout(() => {
+            SFR('.imagelayer').css({
+                'left': '50%',
+                'top': '50%',
+                'width': this.dimensi.width + 'px',
+                'height': this.dimensi.height + 'px',
+                'margin-left': (-0.5 * this.dimensi.width) + 'px',
+                'margin-top': (-0.5 * this.dimensi.height) + 'px'
+            });
+        }, 300);
+
+        SFR('.overlay').on('click', function() {
+            SFR('.imagelayer').css({
+                'left': kembali.left + 'px',
+                'top': (mydom.offset().top -  window.pageYOffset) + 'px',
+                'width': kembali.width + 'px',
+                'height': kembali.height + 'px',
+                'margin-left': '0px',
+                'margin-top': '0px'
+            });
+            setTimeout(() => {
+                SFR('.imagelayer, .overlay').hide();
+            }, 300)
+        })
+    }
+}
+

@@ -1,0 +1,1034 @@
+var myCart = {pendaftaran: [],
+    paket: [],
+    shipper: {
+          penerima: '',
+          kontak: '',
+          provinsi: '',
+          kabupaten: '',
+          kecamatan: '',
+          detail: '',
+          weight: 0,
+          tarif:0,
+          exped:'',
+          jenis:'',
+          layanan:'',
+          id_layanan:'',
+          ongkos: 0,
+          last_check: '2020-01-01 09:00',
+      },
+     cuttingpoin: []
+   },
+nonDig = ['Medali', 'Piagam Cetak', 'Sertifikat Cetak', 'Legalisir Piagam','Greeting Card & Voucher Undian', 'T-Shirt Eksklusif Event'];
+beban = [],
+cartFormIndicator = false,
+hisNeedShipper = false,
+prepareToSet = {
+    response:'empty',
+    data:{
+        prov : [],
+        varian:[],
+        last_check : '2020-01-01 09:00'
+    }
+};
+
+var indexJenisCatched = -1;
+
+
+function getMyCart(){
+getData('cart', {
+token : getCookie('token'),
+order: 'getmycart'
+}, function(resp){
+if(resp.response == 'success'){
+  if(resp.data != null){
+      setStorage(base64_encode('mycart'), shake(JSON.stringify(resp.data), 'mycart'));
+      myCart = resp.data;
+      nonDig = resp.nondig;
+      beban = resp.bobot;
+
+      if((myCart.shipper.detail == '' || myCart.shipper.detail == undefined) &&
+          (myCart.shipper.provinsi == '' || myCart.shipper.provinsi == undefined ) &&
+          (myCart.shipper.kabupaten == '' || myCart.shipper.kabupaten == undefined) &&
+          (myCart.shipper.kecamatan == '' || myCart.shipper.kecamatan == undefined) &&
+          (myCart.shipper.exped == '' || myCart.shipper.exped == undefined) &&
+          (myCart.shipper.layanan == '' || myCart.shipper.layanan == undefined)){
+              if(profiles.alamat_pengiriman.length == 0){
+                  myCart.shipper.penerima = profiles.nama;
+                  myCart.shipper.kontak = profiles.kontak;
+                  myCart.shipper.provinsi = '';
+                  myCart.shipper.kabupaten = '';
+                  myCart.shipper.kecamatan ='';
+                  myCart.shipper.detail = '';
+                  myCart.shipper.exped = '';
+                  myCart.shipper.layanan = '';
+                  myCart.shipper.id_layanan = '';
+              }
+              else{
+                  myCart.shipper.penerima = profiles.alamat_pengiriman.penerima;
+                  myCart.shipper.kontak = profiles.alamat_pengiriman.kontak;
+                  myCart.shipper.provinsi = profiles.alamat_pengiriman.provinsi;
+                  myCart.shipper.kabupaten = profiles.alamat_pengiriman.kabupaten;
+                  myCart.shipper.kecamatan = profiles.alamat_pengiriman.kecamatan;
+                  myCart.shipper.detail = profiles.alamat_pengiriman.detail;
+                  myCart.shipper.exped = '';
+                  myCart.shipper.layanan = '';
+                  myCart.shipper.id_layanan = '';
+              }
+      }
+      if(myCart.shipper.exped == undefined){
+            myCart.shipper.exped = '';
+            myCart.shipper.layanan = '';
+            myCart.shipper.id_layanan = '';
+            myCart.shipper.ongkos = 0;
+            myCart.shipper.tarif = 0;
+      }
+      if(myCart.cuttingpoin == undefined || myCart.cuttingpoin.length == 0 || myCart.cuttingpoin == []){
+          myCart.cuttingpoin = profiles.cuttingpoin;
+          myCart.cuttingpoin.target = profiles.subjek;
+      }
+      else{
+          myCart.cuttingpoin = profiles.cuttingpoin;
+          myCart.cuttingpoin.target = profiles.subjek;
+      }
+      renderBalonCart();
+      filteringMyCart(myCart);
+  }
+  else{
+      if((myCart.shipper.detail == '' || myCart.shipper.detail == undefined) &&
+          (myCart.shipper.provinsi == '' || myCart.shipper.provinsi == undefined ) &&
+          (myCart.shipper.kabupaten == '' || myCart.shipper.kabupaten == undefined) &&
+          (myCart.shipper.kecamatan == '' || myCart.shipper.kecamatan == undefined)){
+              if(profiles.alamat_pengiriman.length==0){
+                  myCart.shipper.penerima = profiles.nama;
+                  myCart.shipper.kontak = profiles.kontak;
+                  myCart.shipper.provinsi = '';
+                  myCart.shipper.kabupaten = '';
+                  myCart.shipper.kecamatan ='';
+                  myCart.shipper.detail = '';
+              }
+              else{
+                  myCart.shipper.penerima = profiles.alamat_pengiriman.penerima;
+                  myCart.shipper.kontak = profiles.alamat_pengiriman.kontak;
+                  myCart.shipper.provinsi = profiles.alamat_pengiriman.provinsi;
+                  myCart.shipper.kabupaten = profiles.alamat_pengiriman.kabupaten;
+                  myCart.shipper.kecamatan = profiles.alamat_pengiriman.kecamatan;
+                  myCart.shipper.detail = profiles.alamat_pengiriman.detail;
+              }
+      }
+      if(myCart.shipper.exped == undefined){
+        myCart.shipper.exped = '';
+        myCart.shipper.layanan = '';
+        myCart.shipper.id_layanan = '';
+        myCart.shipper.ongkos = 0;
+        myCart.shipper.tarif = 0;
+      }
+      if(myCart.cuttingpoin == undefined || myCart.cuttingpoin.length ==0 || myCart.cuttingpoin == []){
+          myCart.cuttingpoin = profiles.cuttingpoin;
+          myCart.cuttingpoin.target = profiles.subjek;
+      }
+      else{
+          myCart.cuttingpoin = profiles.cuttingpoin;
+          myCart.cuttingpoin.target = profiles.subjek;
+      }
+      renderBalonCart();
+      removeStorage(base64_encode('mycart'));
+  }
+}
+})
+}
+
+function filteringMyCart(mC){
+let filter = {
+paket : [],
+pendaftaran : []
+};
+if(mC.paket.length > 0 ){
+mC.paket.forEach(item=>{
+  if(!in_array(filter.paket, item.pose)){
+      filter.paket.push(item.pose)
+  }
+  
+});
+}
+if(mC.pendaftaran.length > 0 ){
+mC.pendaftaran.forEach(item=>{
+  if(!in_array(filter.pendaftaran, item.pos)){
+      filter.pendaftaran.push(item.pos)
+  }
+});
+}
+
+
+if(filter.paket.length > 0 || filter.pendaftaran.length > 0){
+getData('cart',{
+  order : 'filtercart',
+  token : getCookie('token'),
+  filter : JSON.stringify(filter)
+}, resp=>{
+   let pkt =  resp.data.paket,
+       pdf = resp.data.pendaftaran,
+       rmPkt = [],
+       rmPdf = [];
+   myCart.paket.forEach((item, index)=>{
+       if(in_array(pkt, item.pose)){
+          item.item.forEach(it=>{
+              if(in_array(nonDig, it)){
+                     if(!in_array(rmPkt, index)){
+                         rmPkt.push(index);
+                     }
+              }
+          });
+       }
+   })
+   for (var i = rmPkt.length -1; i >= 0; i--){
+       myCart.paket.splice(rmPkt[i],1);
+   }
+   myCart.pendaftaran.forEach((item, index)=>{
+      if(in_array(pdf, item.pos)){
+          rmPdf.push(index);
+      }
+  });
+  for (var i = rmPdf.length -1; i >= 0; i--){
+      myCart.pendaftaran.splice(rmPdf[i],1);
+  }
+  saveMyCart();
+})
+}    
+}
+
+function send2Cart(domcondition){
+SFR(".mainform")
+.children()
+.forEach((item) => {
+item.css({
+left: SFR(".mainform").width() + "px",
+});
+item
+.children()[1].html('').parent().children()[2].html('');
+});
+SFR(".mainform").delay(300, (dom) => {
+dom
+.css({
+left: domcondition.left + "px",
+top: domcondition.top + "px",
+width: "20px",
+height: "20px",
+"border-radius": "100%",
+"margin-top": "0",
+"margin-left": "0",
+display: "flex",
+})
+.delay(350, (dom) => {
+dom.hide();
+dom.parent().hide();
+showScrollBody();
+});
+});
+SFR('.tema .namesrc').hide().css({
+'width':'30px'
+}).children()[1].hide().setValue('').parent().children()[0].css({
+'left': null
+});
+saveMyCart();
+}
+
+function renderBalonCart(){
+let notif = myCart.pendaftaran.length + myCart.paket.length;
+if(notif > 0){
+SFR('.balloncart').css({
+  'display':'flex'
+}).html(notif);
+}
+else{
+SFR('.balloncart').css({
+  'display':'none'
+}).html('');
+}
+}
+
+function saveMyCart(){
+setStorage(base64_encode('mycart'), shake(JSON.stringify(myCart), 'mycart'));
+let notif = myCart.pendaftaran.length + myCart.paket.length;
+getData('cart',{
+token : getCookie('token'),
+order :'savemycart',
+notif: notif,
+cart : JSON.stringify(myCart)
+}, function(resp){
+
+});
+renderBalonCart();
+cartFormIndicator = false;
+}
+
+SFR('#cartbutton').on('click', function(e){
+let notif = myCart.pendaftaran.length + myCart.paket.length;
+btnRegCond = SFR('#cartbutton');
+if(notif > 0){
+cartFormIndicator = true;
+hideScrollBody();
+kiri = SFR('#cartbutton').offset().left;
+atas = SFR('#cartbutton').offset().top - window.pageYOffset;
+lebar = SFR('#cartbutton').width();
+tinggi= SFR('#cartbutton').height();
+SFR(".overlayForm").css({
+display: "block",
+}).delay(100, (dom) => {
+  SFR(".mainform").css({
+    left: kiri + "px",
+    top: atas + "px",
+    width: lebar + "px",
+    height: tinggi + "px",
+    "border-radius": "30px",
+    display: "block",
+  }).delay(30, dom=>{
+      dom.css({
+        width: getTypeDisplay() == "laptop" ? "500px" : "100%",
+        height: getTypeDisplay() == "laptop" ? "600px" : "100%",
+        left: getTypeDisplay() == "laptop" ? "50%" : "0",
+        top: getTypeDisplay() == "laptop" ? "50%" : "0",
+        "border-radius": "10px",
+        "margin-left": getTypeDisplay() == "laptop" ? "-250px" : "0",
+        "margin-top": getTypeDisplay() == "laptop" ? "-300px" : "0",
+      }).delay(300, dom=>{
+          dom.children().forEach((frm, ind) => {
+              frm.children()[1].html("");
+              if (ind > 0) {
+                  frm.css({
+                  left: dom.width() + "px",
+                });
+              } else {
+                  frm.css({
+                    left: "0px",
+                  })
+                  .children()[0]
+                  .children()[1]
+                  .children()[0]
+                  .html("Keranjang Belanja")
+                  .parent()
+                  .children()[1]
+                  .html(filterAin(profiles.nama));
+
+                  let dispTotal = createTotal(frm);
+
+                  let buttonOrder = new CreateButton(frm.children()[2], 'Order', 'btn-success');
+                  buttonOrder.append()
+                  buttonOrder.getButton().on('click', function(){
+                      if(getTotal() == 0){
+                          showToast('Keranjang anda kosong', 'error');
+                      }
+                      else if(SFR('#ongkirshipper').length>0 && (getJarakWaktu(gettoday(),myCart.shipper.last_check, 'Detik')< - 3600 ||
+                         myCart.shipper.detail == '' ||
+                         myCart.shipper.ongkos == 0 ||
+                         myCart.shipper.provinsi == '' ||
+                         myCart.shipper.kabupaten == '' ||
+                         myCart.shipper.kecamatan == '' || 
+                         myCart.shipper.jenis == '')){
+                         
+                         SFR('.form1').children()[1].animateScrollTo(SFR('#ongkirshipper'), 300 , ()=>{
+                              openAddrShipper();
+                         });                          
+                      }
+                      else{
+                          setStorage(base64_encode('mycart'), shake(JSON.stringify(myCart), 'mycart'));
+                          let form = SFR('.mainform').children();
+                          form[0].css({
+                              'left': - SFR('.mainform').width() + 'px',
+                          });
+                          form[1].css({
+                              'left':'0px'
+                          }).children()[1].html(`<p>Apakah anda yakin bahwa nama-nama yang terdaftar dalam keranjang anda sudah benar? Jika belum silahkan cek ulang kembali</p>`)
+                          .parent().children()[0].children()[1].children()[0].html('Form Konfirmasi')
+                          .parent().children()[1].html(`Message Alert`)
+                          .parent().parent().parent().parent().css({
+                              'height':'220px',
+                              'margin-top':'-110px',
+                              'top': "50%"
+                          }).children()[1].children()[2].html('');
+
+                          let btnYakin = new CreateButton(form[1].children()[2], 'Yakin', 'btn-success');
+                          btnYakin.append();
+                          btnYakin.getButton().on('click', function(){
+                              showload();
+                              window.scroll(0,0);
+                              getData('cart',{
+                                  order: 'ajukan',
+                                  token: getCookie('token'),
+                                  data: repair(getStorage(base64_encode('mycart')), 'mycart')
+                              }, resp =>{
+                                  window.scroll(0,0);
+                                  showToast(resp.data.message, resp.data.statusMessage);
+                                  if(resp.data.statusMessage ==  'success'){
+                                      window.scroll(0,0);
+                                      myCart = {pendaftaran: [],
+                                                  paket: [],
+                                                  shipper: {
+                                                      penerima: profiles.alamat_pengiriman.penerima,
+                                                      kontak: profiles.alamat_pengiriman.kontak,
+                                                      provinsi: profiles.alamat_pengiriman.provinsi,
+                                                      kabupaten: profiles.alamat_pengiriman.kabupaten,
+                                                      kecamatan: profiles.alamat_pengiriman.kecamatan,
+                                                      detail: profiles.alamat_pengiriman.detail,
+                                                      weight: 0,
+                                                      tarif:0,
+                                                      exped:'',
+                                                      jenis:'',
+                                                      layanan:'',
+                                                      id_layanan:'',
+                                                      ongkos: 0,
+                                                      last_check: '2020-01-01 09:00',
+                                                  },
+                                                  cuttingpoin: profiles.cuttingpoin
+                                              };
+                                      let key = base64_encode('trans');
+                                      if(getStorage(key) != null){
+                                          let dtinv = JSON.parse(repair(getStorage(key), key));
+                                          dtinv.date = '2020-01-01 10:10';
+                                          setStorage(key, shake(JSON.stringify(dtinv), key));
+                                      }
+                                     
+                                      let dt = resp.data;
+                                      let subjOrd = (in_array_str(dt.data_order.cuttingpoin.subjek, dt.data_order.cuttingpoin.target)? true: false);
+                                      openInvoice(dt.no_transaksi, dt.rek, dt.atan, dt.amount, dt.status, dt.tanggal_expired, dt.data_order, dt.kode_unik, dt.lembaga, subjOrd);
+                                      setButtonIcon("Transaksi");
+                                      SFR('.form1 .posback').click(); 
+                                      saveMyCart();
+                                  }
+                                  hideload();
+                              });
+                          });
+                          let btnBatal = new CreateButton(form[1].children()[2], 'Cek Ulang', 'btn-warning');
+                          btnBatal.append();
+                          btnBatal.getButton().on('click', function(){
+                              SFR(".form2 .posback").click();
+                          });
+                      }
+                  });
+                  renderPaket(frm);
+              }
+            });
+      })
+  })
+});
+}
+else{
+showToast('Keranjang anda masih kosong', 'error');
+}
+});
+
+function renderPaket(frm){
+let ordNum = 0;
+let subjOrd = (in_array_str(profiles.cuttingpoin.subjek, profiles.subjek)? true: false);
+getBobot(bobot=>{
+let shipperNeed = false,
+  weight = 0,
+  total = 0;
+
+hisNeedShipper = false;   
+
+frm.children()[1].html(``);
+myCart.pendaftaran.forEach((elem, idx)=>{
+  total += (elem.jumlah * parseInt(elem.harga));
+  ordNum += elem.jumlah;
+  frm.children()[1].append(`
+  <div class="card-info z-depth-9">
+      <div class="banner-info colorsvgcartpendaftaran">
+          <svg width="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11.997 15.1746C7.684 15.1746 4 15.8546 4 18.5746C4 21.2956 7.661 21.9996 11.997 21.9996C16.31 21.9996 19.994 21.3206 19.994 18.5996C19.994 15.8786 16.334 15.1746 11.997 15.1746Z" fill="currentColor"></path>
+              <path opacity="1.0" d="M11.9971 12.5838C14.9351 12.5838 17.2891 10.2288 17.2891 7.29176C17.2891 4.35476 14.9351 1.99976 11.9971 1.99976C9.06008 1.99976 6.70508 4.35476 6.70508 7.29176C6.70508 10.2288 9.06008 12.5838 11.9971 12.5838Z" fill="currentColor"></path>
+          </svg>
+      </div>
+      <div class="ket-info">
+          <div class="ket">
+              Pendaftaran ${elem.judul} Berbayar <br/> (+Bonus Pembahasan)
+          </div>
+          <div class="status">
+              ${filterAin(elem.nama)} - ${filterAin(elem.sekolah)}
+          </div>
+          <div class="rincian">
+          ${jabarkanbidang(elem.item)}
+          </div>
+      </div>
+      <div class="pricefreq">
+          <div class="freq">
+              <svg onclick="decrement('${idx}', 'pendaftaran')" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon-32">
+                  <path d="M20 11.9999H4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+              <span>${elem.jumlah}</span>
+          </div>
+          <div class="price">Rp. ${formatMoney(elem.harga)}</div>
+      </div>
+  </div>`);
+})
+
+myCart.paket.forEach((elem, idx)=>{
+  if(!shipperNeed){
+      shipperNeed = needShipper(elem.item);
+      hisNeedShipper = shipperNeed;
+  }
+
+  weight += getWeight(elem.item, bobot, elem.jumlah);
+  total += (elem.jumlah * parseInt(elem.harga));
+  ordNum += elem.jumlah;
+  frm.children()[1].append(`
+  <div class="card-info z-depth-9">
+      <div class="banner-info colorsvgcart">
+          <svg fill="none" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M16.4184 6.47H16.6232C19.3152 6.47 21.5 8.72 21.5 11.48V17C21.5 19.76 19.3152 22 16.6232 22H7.3768C4.6848 22 2.5 19.76 2.5 17V11.48C2.5 8.72 4.6848 6.47 7.3768 6.47H7.58162C7.60113 5.27 8.05955 4.15 8.8886 3.31C9.72741 2.46 10.8003 2.03 12.0098 2C14.4286 2 16.3891 4 16.4184 6.47ZM9.91273 4.38C9.36653 4.94 9.06417 5.68 9.04466 6.47H14.9553C14.9261 4.83 13.6191 3.5 12.0098 3.5C11.2587 3.5 10.4784 3.81 9.91273 4.38ZM15.7064 10.32C16.116 10.32 16.4379 9.98 16.4379 9.57V8.41C16.4379 8 16.116 7.66 15.7064 7.66C15.3065 7.66 14.9748 8 14.9748 8.41V9.57C14.9748 9.98 15.3065 10.32 15.7064 10.32ZM8.93737 9.57C8.93737 9.98 8.6155 10.32 8.20585 10.32C7.80595 10.32 7.47433 9.98 7.47433 9.57V8.41C7.47433 8 7.80595 7.66 8.20585 7.66C8.6155 7.66 8.93737 8 8.93737 8.41V9.57Z" fill="currentColor" />
+          </svg>
+      </div>
+      <div class="ket-info">
+          <div class="ket">
+              ${elem.bundle}
+          </div>
+          <div class="status">
+              ${filterAin(elem.nama)} - ${filterAin(elem.sekolah)}  <br/> ${elem.judul} - ${elem.bidang_studi} - ${elem.medali}
+          </div>
+          <div class="rincian">
+          ${jabarkan(elem.item)}
+          </div>
+      </div>
+      <div class="pricefreq">
+          <div class="freq">
+              <svg onclick="decrement('${idx}', 'paket')" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon-32">
+                  <path d="M20 11.9999H4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+              <span>${elem.jumlah}</span>
+              ${(needShipper(elem.item))?`<svg onclick="increment('${idx}', 'paket')" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="icon-32"><path d="M12 4V20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M20 11.9999H4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>`:``}
+          </div>
+          <div class="price">Rp. ${formatMoney((elem.harga * elem.jumlah).toString())}</div>
+      </div>
+  </div>`);
+})
+
+
+if(shipperNeed){
+  if(getJarakWaktu(gettoday(),myCart.shipper.last_check, 'Detik')< -3600){
+      myCart.shipper.ongkos = 0;
+      myCart.shipper.tarif = 0;
+  }
+  if(Math.ceil(weight/1000) != myCart.shipper.weight){
+      myCart.shipper.weight = Math.ceil(weight/1000);
+      myCart.shipper.ongkos = 0;
+      myCart.shipper.tarif = 0;
+  }
+  total += parseInt(myCart.shipper.ongkos);
+  frm.children()[1].append(`
+  <div class="card-info z-depth-9" id="ongkirshipper">
+      <div class="banner-info colorsvgcartshipper">
+          <svg fill="#ffd505" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+              width="24" height="24" viewBox="0 0 406.783 406.783" xml:space="preserve">
+              <g>
+                  <g>
+                      <path d="M127.12,256.572c-19.742,0-35.741,15.993-35.741,35.737c0,19.745,15.999,35.738,35.741,35.738
+                          c19.749,0,35.744-15.993,35.744-35.738C162.864,272.565,146.869,256.572,127.12,256.572z M127.12,307.846
+                          c-8.582,0-15.536-6.955-15.536-15.537c0-8.586,6.954-15.537,15.536-15.537c8.583,0,15.542,6.951,15.542,15.537
+                          C142.662,300.891,135.703,307.846,127.12,307.846z" />
+                      <path d="M315.588,256.572c-19.742,0-35.74,15.993-35.74,35.737c0,19.745,15.998,35.738,35.74,35.738
+                          c19.75,0,35.744-15.993,35.744-35.738C351.332,272.565,335.338,256.572,315.588,256.572z M315.588,307.846
+                          c-8.582,0-15.535-6.955-15.535-15.537c0-8.586,6.953-15.537,15.535-15.537c8.584,0,15.543,6.951,15.543,15.537
+                          C331.131,300.891,324.172,307.846,315.588,307.846z"/>
+                      <path d="M167.329,146.759c0,5.008-4.098,9.105-9.105,9.105H32.579c-5.008,0-9.104-4.097-9.104-9.105v-5.463
+                          c0-5.007,4.097-9.104,9.104-9.104h125.645c5.008,0,9.105,4.097,9.105,9.104V146.759z"/>
+                      <path d="M385.623,200.066c-13.105-3.407-20.604-5.549-25.75-15.487l-17.207-34.839c-5.148-9.938-18.518-18.07-29.707-18.07
+                          h-23.535c0,0-3.166,0.066-3.166-3.12c0-7.305,0-29.219,0-29.219c0-11.327-6.41-20.595-20.045-20.595H74.405
+                          c-19.521,0-28.789,9.269-28.789,20.595v18.311c0,0,0,5.446,5.271,5.446c26.834,0,107.337,0,107.337,0
+                          c10.041,0,18.21,8.168,18.21,18.209v5.463c0,10.041-8.169,18.209-18.21,18.209H50.887c0,0-5.271-0.438-5.271,5.252
+                          c0,2.826,0,4.723,0,6.297c0,5.008,6.864,5.005,6.864,5.005h72.254c10.041,0,18.21,8.169,18.21,18.209v5.463
+                          c0,10.041-8.169,18.209-18.21,18.209H53.62c0,0-8.004-0.148-8.004,6.225c0,11.062,0,44.246,0,44.246
+                          c0,11.326,9.268,20.595,20.595,20.595c0,0,8.532,0,11.376,0c2.58,0,2.96-1.437,2.96-2.159c0-25.679,20.894-46.568,46.574-46.568
+                          c25.682,0,46.575,20.891,46.575,46.568c0,0.725-0.206,2.159,1.767,2.159c22.55,0,91.806,0,91.806,0
+                          c1.82,0,1.746-1.534,1.746-2.159c0-25.679,20.893-46.568,46.574-46.568s46.574,20.891,46.574,46.568
+                          c0,0.725-0.018,2.159,1.121,2.159c10.34,0,23.146,0,23.146,0c11.195,0,20.352-9.157,20.352-20.351v-38.664
+                          C406.783,202.894,396.502,202.894,385.623,200.066z M346.896,198.255c0,0-43.219,0-57.928,0c-2.393,0-2.711-2.33-2.711-2.33
+                          V147.67c0,0-0.135-1.853,2.938-1.853c4.133,0,16.529,0,16.529,0c9.959,0,21.855,7.236,26.434,16.079l15.312,31
+                          c0.645,1.248,1.334,2.356,2.072,3.349C350.086,196.973,349.174,198.255,346.896,198.255z"/>
+                      <path d="M133.838,205.195c0,5.008-4.097,9.105-9.104,9.105H9.104C4.096,214.3,0,210.203,0,205.195v-5.463
+                          c0-5.007,4.097-9.104,9.104-9.104h115.63c5.008,0,9.104,4.097,9.104,9.104V205.195z"/>
+                  </g>
+              </g>
+          </svg>
+      </div>
+      <div class="ket-info">
+          <div class="ket">
+              Ongkos Kirim (${myCart.shipper.exped} - ${myCart.shipper.jenis})
+          </div>
+          <div class="status">
+              ${filterAin(myCart.shipper.penerima)} / ${myCart.shipper.kontak} <br/>
+              ${myCart.shipper.provinsi} -  ${myCart.shipper.kabupaten} -  ${myCart.shipper.kecamatan}
+          </div>
+          <div class="rincian">
+              ${filterAin(myCart.shipper.detail)}
+          </div>
+      </div>
+      <div class="pricefreq">
+          <div class="freq">
+              <svg onclick="openAddrShipper()" width="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                   <path d="M17.0545 10.3976L10.5018 16.9829C10.161 17.3146 9.7131 17.5 9.24574 17.5H6.95762C6.83105 17.5 6.71421 17.4512 6.62658 17.3634C6.53895 17.2756 6.5 17.1585 6.5 17.0317L6.55842 14.7195C6.56816 14.261 6.75315 13.8317 7.07446 13.5098L11.7189 8.8561C11.7967 8.77805 11.9331 8.77805 12.011 8.8561L13.6399 10.4785C13.747 10.5849 13.9028 10.6541 14.0683 10.6541C14.4286 10.6541 14.7109 10.3615 14.7109 10.0102C14.7109 9.83463 14.6428 9.67854 14.5357 9.56146C14.5065 9.52244 12.9554 7.97805 12.9554 7.97805C12.858 7.88049 12.858 7.71463 12.9554 7.61707L13.6078 6.95366C14.2114 6.34878 15.1851 6.34878 15.7888 6.95366L17.0545 8.22195C17.6485 8.81707 17.6485 9.79268 17.0545 10.3976Z" fill="currentColor"></path>
+              </svg>
+          </div>
+          <div class="price">Rp. ${formatMoney(myCart.shipper.ongkos)}/${myCart.shipper.weight}kg</div>
+      </div>
+  </div>`);
+
+}
+else{
+  myCart.shipper.ongkos = 0;
+  myCart.shipper.tarif = 0;
+  myCart.shipper.weight = 0;
+  myCart.shipper.exped = '';
+  myCart.shipper.jenis = '';
+  myCart.shipper.layanan = '';
+  myCart.shipper.id_layanan = '-1';
+}
+
+if(subjOrd && ordNum>=profiles.cuttingpoin.min){
+  frm.children()[1].append(`
+      <div class="card-info z-depth-9" id="discform" style="background:#0bc056;  border-radius:30px">
+          <div class="banner-info colorsvgcartshipper">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke="#fff" d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#292D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M9 15L15 9" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M14.4945 14.5H14.5035" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M9.49451 9.5H9.50349" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+          </div>
+          <div class="ket-info">
+              <div class="status" style="color:#fff; font-size:0.7rem">
+                 Anda mendapatkan discount sebesar ${profiles.cuttingpoin.dis * 100}% dari Total Belanja karena jumlah pesanan anda melebihi ${profiles.cuttingpoin.min} item pesanan. Nilai discount akan tertera pada invoice.
+              </div>
+          </div>
+      </div>`);
+}                       
+frm.children()[2].children()[0].html(`Total : Rp. ${formatMoney(total.toString())}`)
+});
+}
+
+function createTotal(frm){
+let dispTotal = document.createElement('div');
+dispTotal.className = 'priceTotal';
+frm.children()[2].addChild(dispTotal);
+return dispTotal;
+}
+
+function getBobot(cb){
+if(beban.length == 0){
+showload();
+getData('cart', {
+  token : getCookie('token'),
+  order :'bobot'
+}, (resp)=>{
+  if(resp.response == 'success'){
+      cb(resp.bobot);
+      beban = resp.bobot;
+  }
+  hideload();
+});
+}
+else{
+cb(beban);
+}
+}
+
+function jabarkanbidang(json) {
+var arr = [];
+json.forEach((item) => {
+arr.push(item.bidang);
+});
+return jabarkan(arr);
+}
+
+function decrement(index, kontext){
+if(kontext == 'paket'){
+if(myCart.paket[index].jumlah <= 1){
+  let form = SFR('.mainform').children();
+  form[0].css({
+      'left': - SFR('.mainform').width() + 'px',
+  });
+  form[1].css({
+      'left':'0px'
+  }).children()[1].html(`<p>Apakah anda yakin ingin menghapus data paket ini?</p>`)
+  .parent().children()[0].children()[1].children()[0].html('Form Konfirmasi')
+  .parent().children()[1].html(`Message Alert`)
+  .parent().parent().parent().parent().css({
+      'height':'200px',
+      'margin-top':'-100px',
+      'top': "50%"
+  }).children()[1].children()[2].html('');
+
+
+  let btnYakin = new CreateButton(SFR('.form2 .formfooter'), 'Yakin', 'btn-danger');
+  btnYakin.append();
+  btnYakin.getButton().on('click', function(){
+      myCart.paket.splice(index, 1);
+      renderPaket(SFR('.form1'));
+      SFR(".form2 .posback").click();
+  });
+
+  let btnBatal = new CreateButton(SFR('.form2 .formfooter'), 'Urungkan', 'btn-success');
+  btnBatal.append();
+  btnBatal.getButton().on('click', function(){
+      SFR(".form2 .posback").click();
+  })
+}
+else{
+  myCart.paket[index].jumlah = myCart.paket[index].jumlah - 1;
+  renderPaket(SFR('.form1'));
+}
+}
+else{
+if(myCart.pendaftaran[index].jumlah <= 1){
+  let form = SFR('.mainform').children();
+  form[0].css({
+      'left': - SFR('.mainform').width() + 'px',
+  });
+  form[1].css({
+      'left':'0px'
+  }).children()[1].html(`<p>Apakah anda yakin ingin menghapus data pendaftaran ini?</p>`)
+  .parent().children()[0].children()[1].children()[0].html('Form Konfirmasi')
+  .parent().children()[1].html(`Message Alert`)
+  .parent().parent().parent().parent().css({
+      'height':'200px',
+      'margin-top':'-100px',
+      'top': "50%"
+  }).children()[1].children()[2].html('');
+
+
+  let btnYakin = new CreateButton(SFR('.form2 .formfooter'), 'Yakin', 'btn-danger');
+  btnYakin.append();
+  btnYakin.getButton().on('click', function(){
+      myCart.pendaftaran.splice(index, 1);
+      renderPaket(SFR('.form1'));
+      SFR(".form2 .posback").click();
+  });
+
+  let btnBatal = new CreateButton(SFR('.form2 .formfooter'), 'Urungkan', 'btn-success');
+  btnBatal.append();
+  btnBatal.getButton().on('click', function(){
+      SFR(".form2 .posback").click();
+  })
+}
+else{
+  myCart.pendaftaran[index].jumlah = myCart.pendaftaran[index].jumlah - 1;
+  renderPaket(SFR('.form1'));
+}
+}
+}
+
+function increment(index, kontext){
+if(myCart.paket[index].jumlah >= 10 ){
+showToast('Jumlah akumulasi sudah melebihi batas maksimum', 'error');
+}
+else{
+myCart.paket[index].jumlah = myCart.paket[index].jumlah + 1 ;
+renderPaket(SFR('.form1'));
+}
+}
+
+function needShipper(arr){
+let palang = false;
+arr.forEach(elem=>{
+if(in_array(nonDig, elem)){
+  palang = true;
+}
+});
+return palang;
+}
+
+function openShipper(){
+let mcrt = JSON.parse(repair(getStorage(base64_encode('mycart')), 'mycart'));
+}
+
+function getWeight(item, bobot,jumlah){
+let resp = 0;
+item.forEach(it=>{
+bobot.forEach(bt=>{
+   if(it == bt.item){
+       resp += (bt.weight * jumlah);
+   }
+})
+});
+return resp;
+}
+
+function openAddrShipper(){
+let form = SFR('.mainform').children();
+form[0].css({
+'left': - SFR('.mainform').width() + 'px',
+});
+form[1].css({
+'left':'0px'
+}).children()[0].children()[1].children()[0].html('Alamat Pengiriman')
+.parent().children()[1].html((myCart.shipper.penerima==''? filterAin(profiles.nama): filterAin(myCart.shipper.penerima)))
+.parent().parent().parent().children()[2].html(``);
+showload();
+    if(prepareToSet.response == 'empty' || (prepareToSet.response == 'success' && prepareToSet.data.varian.length == 0) || myCart.shipper.ongkos == 0){
+        showload();
+        setVarianExped({
+            provinsi :  myCart.shipper.provinsi,
+            kabupaten :  myCart.shipper.kabupaten,
+            kecamatan:  myCart.shipper.kecamatan
+        },myCart.shipper.weight, (resp)=>{
+            if(resp.response == 'success'){
+                prepareToSet = resp;
+                prepareToSet.data.varian.sort((item1, item2) => {
+                    return (parseInt(item1.price) < parseInt(item2.price)) ? -1 : (parseInt(item1.price) > parseInt(item2.price) ? 1 : 0);
+                }).slice(0, prepareToSet.data.varian.length);
+                renderAddr(prepareToSet, form)
+            }
+        });
+    }
+    else{
+        prepareToSet.data.varian.sort((item1, item2) => {
+            return (parseInt(item1[0]) < parseInt(item2[0])) ? -1 : (parseInt(item1[0]) > parseInt(item2[0]) ? 1 : 0);
+        }).slice(0, prepareToSet.data.varian.length);
+        renderAddr(prepareToSet, form);
+    }
+}
+
+function renderAddr(resp, form){
+if(resp.response == 'success'){
+let varian = (resp.data.varian.length == 0? []: resp.data.varian.map((data)=>{
+  return data.exped+' - '+ data.service + ' - Rp' + formatMoney(data.price.toString()) + `/${data.berat}Kg`;
+}));
+
+indexJenisCatched = getJenisIndex(resp.data.varian, myCart.shipper.exped, myCart.shipper.layanan);
+
+let penerima = new CreateInput(form[1].children()[1],'text', (myCart.shipper.penerima==''? filterAin(profiles.nama): filterAin(myCart.shipper.penerima)),[],'Penerima');
+penerima.append();
+
+
+
+let kontak = new CreateInput(form[1].children()[1],'number', (myCart.shipper.kontak==''? profiles.kontak: myCart.shipper.kontak),[],'Kontak');
+kontak.append();
+
+
+let prov = new CreateInput(form[1].children()[1], 'combo', myCart.shipper.provinsi, resp.data.prov, 'Provinsi');
+prov.append();
+prov.getInputer().on('click', function(){
+  prov.buildCombo(value =>{
+      if(value != null){
+         showload();
+         getData('cart',{
+              token : getCookie('token'),
+              order: 'getkabdest',
+              prov: value,
+              jenis: jenis.getValue()
+         }, resp =>{
+              if(resp.response == 'success'){
+                  kab.replaceItem(resp.data);
+                  kec.replaceItem([]);
+                  kab.setValue('');
+                  kec.setValue('');
+                  detail.setValue('');
+                  jenis.replaceItem([]);
+                  jenis.setValue('');
+
+              }
+              hideload();
+         })
+      }
+  })
+});
+
+let kab = new CreateInput(form[1].children()[1], 'combo', myCart.shipper.kabupaten,[], 'Kabupaten');
+kab.append();
+kab.getInputer().on('click', function(){
+  kab.buildCombo(value =>{
+      if(value != null){
+          showload();
+          getData('cart',{
+                  token : getCookie('token'),
+                  order: 'getkecdest',
+                  kab: value,
+                  prov: prov.getValue(),
+                  jenis: jenis.getValue()
+          }, resp =>{
+                  if(resp.response == 'success'){
+                      kec.replaceItem(resp.data);
+                      kec.setValue('');
+                      detail.setValue('');
+                      jenis.replaceItem([]);
+                      jenis.setValue('');
+                  }
+                  hideload();
+          })
+      }
+  })
+});
+
+let kec = new CreateInput(form[1].children()[1], 'combo', myCart.shipper.kecamatan,[], 'Kecamatan');
+kec.append();
+kec.getInputer().on('click', function(){
+  kec.buildCombo(value =>{
+      if(value != null && value != kec.getValue){
+          showload();
+          getData('cart',{
+                  token : getCookie('token'),
+                  order: 'cekong',
+                  prov: prov.getValue(),
+                  kab:kab.getValue(),
+                  kec:value,
+                  wg:myCart.shipper.weight
+          }, resp =>{
+                  if(resp.response == 'success'){
+                      prepareToSet.data.varian = resp.data
+                      prepareToSet.data.last_check = resp.last_check;
+                      prepareToSet.data.varian.sort((item1, item2) => {
+                          return (parseInt(item1.price) < parseInt(item2.price)) ? -1 : (parseInt(item1.price) > parseInt(item2.price) ? 1 : 0);
+                      }).slice(0, prepareToSet.data.varian.length);
+                      let varian = (prepareToSet.data.varian.length == 0? []: prepareToSet.data.varian.map((data)=>{
+                        return data.exped+' - '+ data.service + ' - Rp' + formatMoney(data.price.toString()) + `/${data.berat}Kg`;
+                      }));
+
+                      jenis.replaceItem(varian);
+                      jenis.setValue(varian[0]);
+                  }
+                  hideload();
+          })
+      }
+  })
+});
+
+
+let jenis = new CreateInput(form[1].children()[1], 'combo', (varian.length > 0 && indexJenisCatched >= 0? varian[indexJenisCatched] :''), varian, 'Jenis Ekspedisi');
+jenis.append();
+jenis.getInputer().on('click', function(){
+  jenis.buildComboKhusus((value, urutan) =>{
+      if(value != null){
+          indexJenisCatched = urutan;
+      }
+  })
+});
+
+let detail = new CreateInput(form[1].children()[1], 'textarea',  filterAin(myCart.shipper.detail),[], 'Detail Alamat');
+detail.append();
+
+
+
+
+let buttonSet = new CreateButton(form[1].children()[2], 'Set Alamat', 'btn-success');
+buttonSet.append();
+buttonSet.getButton().on('click', function(){
+  let addrElem = SFR('.form2 .formbody').children(),
+      palang = true,
+      message = '',
+      posid = '';
+      addrElem.forEach((element, index)=>{
+          if(index == 1){
+              if(element.children()[1].value().length > 13){
+                  if(palang){
+                      message = 'Digit nomor kontak melebihi batas maksimum';
+                      posid = element[0].id;
+                  }
+                  palang = false;
+              }
+              else if(element.children()[1].value().length < 10){
+                  if(palang){
+                      message = 'Digit nomor kontak masih kurang';
+                      posid = element[0].id;
+                  }
+                  palang = false;
+              }
+              else{
+                  if(isNumber(element.children()[1].value())){
+                      // do nothing
+                  }
+                  else {
+                      if(palang){
+                          message = 'No kontak harus berisi number';
+                          posid = element[0].id;
+                      }
+                      palang = false;
+                  }
+              }
+          }
+          else{
+              if(element.children()[1].value() == ''){
+                  if(palang){
+                      message = element.children()[0][0].innerText+ ' masih kosong';
+                      posid = element[0].id;
+                  }
+                  palang = false;
+              }
+          }
+      });
+      
+      
+
+      if(palang){
+          if(addrElem[6].children()[1].value().length < 250){
+                myCart.shipper.penerima = addrElem[0].children()[1].value();
+                myCart.shipper.kontak = addrElem[1].children()[1].value();
+                myCart.shipper.provinsi = addrElem[2].children()[1].value();
+                myCart.shipper.kabupaten = addrElem[3].children()[1].value();
+                myCart.shipper.kecamatan = addrElem[4].children()[1].value();
+                myCart.shipper.exped = prepareToSet.data.varian[indexJenisCatched].exped;
+                myCart.shipper.jenis = prepareToSet.data.varian[indexJenisCatched].service;
+                myCart.shipper.layanan = prepareToSet.data.varian[indexJenisCatched].service;
+                myCart.shipper.id_layanan = prepareToSet.data.varian[indexJenisCatched].service_code;
+                myCart.shipper.detail = addrElem[6].children()[1].value();
+                myCart.shipper.last_check = prepareToSet.data.last_check;
+                myCart.shipper.tarif = parseInt(prepareToSet.data.varian[indexJenisCatched].price)/parseInt(prepareToSet.data.varian[indexJenisCatched].berat);
+                myCart.shipper.ongkos = prepareToSet.data.varian[indexJenisCatched].price;
+                saveMyCart();
+                renderPaket(SFR('.form1'));
+                SFR(".form2 .posback").click();
+          }
+          else{
+              showToast('Detail alamat harus kurang dari 250 karakter', 'error');
+              SFR('.form2 .formbody').animateScrollTo(SFR('#'+posid), 300);
+          }
+      }
+      else{
+          showToast(message, 'error');
+          SFR('.form2 .formbody').animateScrollTo(SFR('#'+posid), 300);
+      }
+})
+}
+hideload();
+}
+
+function getJenisIndex(varian, exped, layanan){
+let ret = -1;
+varian.forEach((el, ind)=>{
+    if(el.exped.toLowerCase() == exped.toLowerCase() && el.service.toLowerCase() == layanan.toLowerCase()){
+         ret = ind;
+    }
+});
+return ret;
+}
+function getTotal(){
+let total = 0;
+myCart.pendaftaran.forEach(el=>{
+total += el.harga * el.jumlah;
+});
+let palang = false;
+myCart.paket.forEach(el=>{
+total += el.harga * el.jumlah;
+if(!palang){
+  palang = needShipper(el.item);
+}
+});
+if(palang){
+total += myCart.shipper.ongkos;
+}
+return total;
+}
+
+
+function setVarianExped(alamat_pengiriman,weight, cobek){
+getData('cart',{
+  token : getCookie('token'),
+  order : 'provdest',
+  prov :alamat_pengiriman.provinsi,
+  kab :alamat_pengiriman.kabupaten,
+  kec:alamat_pengiriman.kecamatan,
+  wg: weight
+}, function(resp){
+if(resp.response == 'success'){
+  prepareToSet = resp;
+  cobek(resp)
+}
+});
+}

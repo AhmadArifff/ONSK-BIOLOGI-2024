@@ -1,0 +1,354 @@
+let ovNigol = SFR('.overlayNigol'), // convert to myframework
+    formNigol = SFR('.formNigol'),
+    avatarLogo = SFR('.avatarLogo');
+var profiles;
+let signUpElem = SFR('#formSignUp .row').children();
+
+
+SFR('#formSignIn, #formSignUp, #formForgot').css({
+    'width': formNigol.width()-25 + 'px'
+});
+
+window.addEventListener('resize', function(event) {
+    SFR('#formSignIn, #formSignUp, #formForgot').css({
+        'width': formNigol.width()-25 + 'px'
+    });
+}, true);
+
+
+
+SFR('#btnsignup').on('click', ()=>{
+    SFR('#formSignIn').css({
+        'left':-formNigol.width()-25+'px',
+        'transition': '0.3s'
+    });
+    SFR('#formSignUp').css({
+        'left':'25px'
+    });
+    formNigol.css({
+        'height':'650px'
+    });
+    setTimeout(()=>{
+        avatarLogo.css({
+            'top':formNigol.offset().top - (avatarLogo.height()/2) - window.pageYOffset+ 'px'
+        });
+    },300)
+   
+});
+SFR('#btnsignin').on('click', ()=>{
+    SFR('#formSignIn').css({
+        'left':'25px',
+        'transition': '0.3s'
+    });
+    SFR('#formSignUp').css({
+        'left':formNigol.width()+'px'
+    });
+    SFR('#formForgot').css({
+        'left':formNigol.width()+'px'
+    });
+    formNigol.css({
+        'height':'550px'
+    });
+    setTimeout(()=>{
+        avatarLogo.css({
+            'top':formNigol.offset().top - (avatarLogo.height()/2) - window.pageYOffset + 'px'
+        });
+    },300)
+});
+SFR('#btnforgot').on('click', ()=>{
+    SFR('#formSignIn').css({
+        'left':-formNigol.width()-25+'px',
+        'transition': '0.3s'
+    });
+    SFR('#formForgot').css({
+        'left':'25px'
+    });
+    formNigol.css({
+        'height':'450px'
+    });
+    setTimeout(()=>{
+        avatarLogo.css({
+            'top':formNigol.offset().top - (avatarLogo.height()/2) - window.pageYOffset + 'px'
+        });
+    },300)
+  
+})
+SFR('#btnSignIn').on('click', function(){
+    let email = SFR('#email').value(),
+        sandi = SFR('#password').value();
+
+    if (email != "" &&  sandi != "") {
+        showload();
+        getData('auth', {
+            'token' : 'auth',
+            'email' : email,
+            'sandi' : sandi
+        }, (resp) =>{
+           hideload();
+           if(resp.response == 'success'){
+               setCookie('token', resp.data.token);
+               profiles = resp.data.profiles;
+               SFR('.namapeserta').html((profiles.nama.length > 20? filterAin(profiles.nama.substr(0,19)): filterAin(profiles.nama)));
+               SFR('.statuspeserta span').html(profiles.subjek + ' - ' + profiles.jenjang);
+               SFR('.formFoto img')[0].src =  profiles.face+'?a='+Math.random();
+               SFR('.fotoProfle img')[0].src =   profiles.face+'?a='+Math.random();
+               ovNigol.css({
+                'display':'none'
+               }).delay(300, (dom)=>{
+                    if(profiles.sekolah == '' || profiles.jenjang == 'undefined'){
+                        bannerFoto.click();
+                        setTimeout(() => {
+                            FdataP();
+                        }, 1000)
+                    }
+                    else{
+                        getDataQuiz(true);
+                    }
+               });
+               setButtonIcon('Home');
+               showScrollBody();
+               setVarianExped(profiles.alamat_pengiriman,0, (resp)=>{});
+               getMyCart();
+               if(resp.data.expinv.length>0){
+                   expinv(resp.data.expinv);
+               }
+           }
+           else{
+               showToast('invalid data login', 'error');
+           }
+        });
+    }
+    else {
+        if(email == ''){
+            showToast('email masih kosong', 'error');
+        }
+        else if(sandi == ''){
+            showToast('sandi masih kosong', 'error');
+        }
+    }
+});
+SFR('#imforg').on('click', function(){
+    let email = SFR('#emailforgot').value();
+    if (email != '') {
+        showload();
+        getData('auth', {
+            'token' : 'forg',
+            'email' : email
+        }, (resp) =>{
+            if(resp.response == 'success'){
+                showToast(resp.data.message,resp.data.status);
+            }
+            hideload();
+        });
+    } else {
+        showToast('isi email anda', 'warning');
+    }
+})
+
+// visible pass
+SFR('.formNigol .form-group span').on('click', function(){
+   let childOfParent = SFR(this).parent().children();
+   if(childOfParent[1].getAttr('type') == 'password'){
+        SFR(this).html(` <svg fill="none" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                <path d="M9.76045 14.3667C9.18545 13.7927 8.83545 13.0127 8.83545 12.1377C8.83545 10.3847 10.2474 8.97168 11.9994 8.97168C12.8664 8.97168 13.6644 9.32268 14.2294 9.89668" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M15.1049 12.6987C14.8729 13.9887 13.8569 15.0067 12.5679 15.2407" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M6.65451 17.4722C5.06751 16.2262 3.72351 14.4062 2.74951 12.1372C3.73351 9.85823 5.08651 8.02823 6.68351 6.77223C8.27051 5.51623 10.1015 4.83423 11.9995 4.83423C13.9085 4.83423 15.7385 5.52623 17.3355 6.79123" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M19.4473 8.99072C20.1353 9.90472 20.7403 10.9597 21.2493 12.1367C19.2823 16.6937 15.8063 19.4387 11.9993 19.4387C11.1363 19.4387 10.2853 19.2987 9.46729 19.0257" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M19.8868 4.24951L4.11279 20.0235" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>`);
+
+        
+        childOfParent[1].setAttr('type','text');
+   }
+   else{
+        SFR(this).html(`<svg fill="none" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M15.1614 12.0531C15.1614 13.7991 13.7454 15.2141 11.9994 15.2141C10.2534 15.2141 8.83838 13.7991 8.83838 12.0531C8.83838 10.3061 10.2534 8.89111 11.9994 8.89111C13.7454 8.89111 15.1614 10.3061 15.1614 12.0531Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M11.998 19.355C15.806 19.355 19.289 16.617 21.25 12.053C19.289 7.48898 15.806 4.75098 11.998 4.75098H12.002C8.194 4.75098 4.711 7.48898 2.75 12.053C4.711 16.617 8.194 19.355 12.002 19.355H11.998Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>`);
+        childOfParent[1].setAttr('type','password');
+   }
+
+})
+avatarLogo.css({
+    'top':formNigol.offset().top - (avatarLogo.height()/2) + 'px'
+});
+avatarLogo.html(`<img src="assets/images/puspresnus.png"/>`);
+
+
+function logout(){
+    ovNigol.css({
+        'display':'flex'
+    }).delay(300, (dom)=>{
+        SFR('#btnsignin').click();
+    });
+    // SFR('.maindisp').html('');
+    hideScrollBody();
+    eraseCookie('token');
+    removeStorage(base64_encode('jisamsu'));
+    removeStorage(base64_encode('home'));
+    removeStorage(base64_encode('mycart'));
+    removeStorage(base64_encode('jadwal'));
+    removeStorage(base64_encode('trans'));
+    removeStorage(base64_encode('riwayat'));
+    SFR(".maindisp .stage1").html('').hide();
+    SFR(".maindisp .stage2").html('').hide();
+    SFR(".maindisp .stage3").html('').hide();
+    myCart = {pendaftaran: [],
+        paket: [],
+        shipper: {
+              penerima: '',
+              kontak: '',
+              provinsi: '',
+              kabupaten: '',
+              kecamatan: '',
+              detail: '',
+              weight: 0,
+              tarif:0,
+              jenis:'JnT Reg Ez',
+              ongkos: 0,
+              last_check: '2020-01-01 09:00',
+          }
+       };
+}
+
+
+SFR(document).ready(()=>{
+    SFR('#btnsignin').click();
+    if(getCookie('token') == null){
+        ovNigol.css({
+            'display':'flex'
+        });
+        hideScrollBody();
+    }
+    else{
+        ovNigol.css({
+            'display':'none'
+        });
+        showScrollBody();
+    }
+
+    var link = window.location.toString().split('#');
+    if (link.length == 2 && link[1] != '') {
+        let data = link[1].split('happy');
+        setTimeout(()=>{
+            showload();
+            getData('auth', {
+                token: 'cert',
+                folder: data[0],
+                data : data[1] 
+            }, (resp) =>{
+                if(resp.response == 'success'){
+                    if(resp.type == 'piag'){
+                        openPiag(resp.data, 'Penghargaan');
+                    }
+                    else if(resp.type == 'cert'){
+                        openCert(resp.data, 'Kepesertaan');
+                    }
+                    hideload();
+                }
+            });  
+        }, 1000)  
+    }
+});
+
+SFR('#btnSignUp').on('click', function(){
+    let palang = true,
+        datasignup = {},
+        message = '';
+    signUpElem.forEach((elem, index)=>{
+        if(index < 5){
+            let nilai = elem.children()[0].children()[1];
+            if(nilai.value() == ''){
+                palang = false;
+                message = nilai[0].id + ' masih kosong';
+            }
+            else if(nilai.value() == 'Pilih akun sebagai' || nilai.value().split(' ').join('').toLowerCase() == 'pilihakunsebagai'){
+                palang = false;
+                message = nilai[0].id + ' masih kosong';
+            }
+            else if(index == 1){
+                let emls = nilai.value().split('@');
+                if (emls[1] != "gmail.com" && emls[1] != "yahoo.com" && emls[1] != "yahoo.co.id") {
+                    palang = false;
+                    message = 'Isi email dengan benar (@gmail.com / @yahoo.com / @yahoo.co.id)';
+                }
+                else{
+                    datasignup[nilai[0].id] = nilai.value();
+                }
+            }
+            else  if(index == 3){
+                if(nilai.value().length > 13){
+                    palang = false;
+                    message = 'Digit nomor kontak melebihi batas maksimum';
+                }
+                else if(nilai.value().length < 10){
+                    palang = false;
+                    message = 'Digit nomor kontak masih kurang';
+                }
+                else{
+                    if(isNumber(nilai.value())){
+                        datasignup[nilai[0].id] = nilai.value();
+                    }
+                    else {
+                        palang = false;
+                        message = 'Kontak harus berisi number';
+                    }
+                }
+            }
+            else if(index == 2){
+                if(nilai.value().length < 7){
+                    palang = false;
+                    message = 'Password kurang dari 7 digit';
+                }
+                else{
+                    datasignup[nilai[0].id] = nilai.value();
+                }
+            }
+            else{
+                datasignup[nilai[0].id] = nilai.value();
+            }
+        }
+        else{
+            if(!elem.children()[0].children()[0][0].checked){
+                palang = false;
+                message = 'belum setuju dengan syarat dan ketentuan kami';
+            }
+        }
+    });
+    if(palang){
+        datasignup['token'] = 'reg';
+        showload();
+        getData('auth', datasignup, (resp) =>{
+           if(resp.response == 'success'){
+               if(resp.data.process == 'success'){
+                    setCookie('token', resp.data.token);
+                    profiles = resp.data.profiles;
+                    SFR('.namapeserta').html((profiles.nama.length > 20? profiles.nama.substr(0,19): profiles.nama));
+                    SFR('.statuspeserta span').html(profiles.subjek + ' - ' + profiles.jenjang);
+                    ovNigol.css({
+                        'display':'none'
+                    }).delay(300, (dom)=>{
+                        bannerFoto.click();
+                        setTimeout(() => {
+                            FdataP();
+                        }, 1000)
+                    });
+                }
+                else{
+                    showToast(resp.data.process, 'error');
+                }
+          
+           }
+           else{
+                showToast('invalid data login', 'error');
+           }
+           hideload();
+        });
+    }
+    else{
+        showToast(message, 'error');
+    }
+});
+
+
+

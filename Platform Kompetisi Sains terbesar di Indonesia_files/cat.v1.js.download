@@ -1,0 +1,808 @@
+var btnController = SFR('.footerExam').children(),
+    posKiri,
+    posAtas,
+    lebarController,
+    tinggiController,
+    jsonS = [],
+    jsonJ = {
+        status: 'belum',
+        data: [],
+        tanggal: gettoday()
+    },
+    containerOption = SFR('.bodyExam').children(),
+    currentIndex = 0,
+    tombols = [],
+    obengs = '',
+    intervals,
+    begin = gettoday(),
+    selisih = 0,
+    rentang = 0,
+    posTimer = '',
+    katpos = '';
+    endless = '';
+setInterval(function() {
+    if(jsonJ.status == 'belum'){
+        if(jsonJ.data.length > 0 ){
+            initData(JSON.stringify(jsonJ.data));
+        }
+    }
+}, (Math.floor(Math.random() * 600) + 540) * 1000);
+
+btnController[0].on('click', function(){
+    currentIndex--;
+    currentIndex = (currentIndex == -1 ? 0 : currentIndex);
+    let ct = SFR('.containerTombol');
+    let posTarget = tombols[currentIndex].offset().top;
+    if(posTarget < ct.offset().top){
+        SFR('.containerTombol').animateScrollTo(tombols[currentIndex], 100, ()=>{
+            renderSoal(currentIndex);
+        })
+    }
+    else if(posTarget > ct.offset().top + ct.height()-70){
+        SFR('.containerTombol').animateScrollTo(tombols[currentIndex], 100, ()=>{
+            renderSoal(currentIndex);
+        })
+    }
+    else{
+        renderSoal(currentIndex);
+    }
+});
+btnController[1].on('click', function(){
+    currentIndex++;
+    currentIndex = (currentIndex == jsonS.length ? (jsonS.length - 1) : currentIndex);
+    let ct = SFR('.containerTombol');
+    let posTarget = tombols[currentIndex].offset().top;
+    if(posTarget < ct.offset().top){
+        SFR('.containerTombol').animateScrollTo(tombols[currentIndex], 100, ()=>{
+            renderSoal(currentIndex);
+        })
+    }
+    else if(posTarget > ct.offset().top + ct.height()-70){
+        SFR('.containerTombol').animateScrollTo(tombols[currentIndex], 100, ()=>{
+            renderSoal(currentIndex);
+        })
+    }
+    else{
+        renderSoal(currentIndex);
+    }
+});
+btnController[2].on('click', function(){
+    let lebarLayar = SFR('.overlayExam').width(),
+        tinggiLayar = SFR('.overlayExam').height();
+        posKiri = SFR(this).offset().left,
+        posAtas = SFR(this).offset().top - window.pageYOffset,
+        lebarController = SFR(this).width(),
+        tinggiController =  SFR(this).height();
+
+    SFR('.tombolExam').css({
+        display : 'block',
+        width: lebarController + 'px',
+        height: tinggiController + 'px',
+        left:  posKiri + 'px',
+        top: posAtas + 'px',
+        'border-radius':'100%'
+    }).delay(30, dom=>{
+        if(lebarLayar > 1200 && lebarLayar <= 1500){
+            dom.children()[0].css({'display':'flex'});
+            dom.children()[1].css({'display':'flex'});
+            // lakukan mode side bar
+            SFR('.bodyExam').css({
+                'margin-left':'30px'
+            });
+            let lebarTombols = (lebarLayar - SFR('.bodyExam').width()-90),
+                tinggiTombols = tinggiLayar - 115;
+            dom.css({
+                width: lebarTombols + 'px',
+                height: tinggiTombols + 'px',
+                'border-radius':'20px',
+                left: SFR('.bodyExam').width() + 60 + 'px',
+                top: '100px'
+            });
+            SFR('.footerExam').css({
+                'width':lebarTombols+'px',
+                'left': SFR('.bodyExam').width() + 60 + 'px',
+                'margin-left':'0',
+                'z-index':'1'
+            })
+        }
+        else if(lebarLayar>1500){
+
+            dom.children()[0].css({'display':'flex'});
+            dom.children()[1].css({'display':'flex'});
+
+            let lebarTombols = 500,
+                tinggiTombols = tinggiLayar - 115;
+
+            let sisa = lebarLayar - SFR('.bodyExam').width() - lebarTombols-30;
+                margBodyExam = sisa/2;
+            SFR('.bodyExam').css({
+                'margin-left': margBodyExam +'px'
+            });
+
+            dom.css({
+                width: lebarTombols + 'px',
+                height: tinggiTombols + 'px',
+                'border-radius':'20px',
+                left: (SFR('.bodyExam').width() + 30 + margBodyExam) + 'px',
+                top: '100px'
+             });
+
+             SFR('.footerExam').css({
+                'width':lebarTombols+'px',
+                left: (SFR('.bodyExam').width() + 30 + margBodyExam) + 'px',
+                'margin-left':'0',
+                'z-index':'1'
+            })
+
+        }
+        else{
+            // lakukan mode phone
+            dom.children()[0].css({'display':'flex'});
+            dom.children()[1].css({'display':'flex'});
+
+            let lebarTombols = SFR('.footerExam').width();
+                tinggiTombols = tinggiLayar - 165,
+                margTombols = (lebarLayar - lebarTombols)/2;
+                dom.css({
+                    width: lebarTombols + 'px',
+                    height: tinggiTombols + 'px',
+                    'border-radius':'20px',
+                    left: margTombols + 'px',
+                    top: '150px'
+                });
+
+                SFR('.footerExam').css({
+                    'z-index':'1'
+                })
+        }
+    });
+    setTimeout(()=>{
+    }, 1000) 
+});
+btnController[3].on('click', function(){
+    if(existJ(currentIndex)>=0){
+        jsonJ.data[existJ(currentIndex)].status = 'yakin';
+        saveJsonJ()
+        renderOption(currentIndex);
+    }
+});
+btnController[4].on('click', function(){
+    if(existJ(currentIndex)>=0){
+        jsonJ.data[existJ(currentIndex)].status = 'ragu';
+        saveJsonJ();
+        renderOption(currentIndex);
+        showToast('Anda menandai soal ini dengan jawaban ragu. Kembali lagi ke soal ini jika masih ada waktu','warning')
+    }
+});
+btnController[5].on('click', function(){
+    if(existJ(currentIndex)>=0){
+        jsonJ.data.splice(existJ(currentIndex),1);
+        saveJsonJ()
+        renderOption(currentIndex);
+        showToast('Jawban di nomor soal ini berhasil dihapus','success')
+    }
+});
+
+btnController[6].on('click', function(){
+    kiri = SFR(this).children()[0].offset().left;
+    atas = SFR(this).children()[0].offset().top - window.pageYOffset;
+    lebar = SFR(this).children()[0].width();
+    tinggi = SFR(this).children()[0].height();
+    SFR(".overlayForm")
+    .css({
+    display: "block",
+    }).delay(10, dom=>{
+        hideScrollBody();
+        SFR(".mainform")
+        .css({
+            display: "block",
+            width: getTypeDisplay() == "laptop" ? "500px" : "100%",
+            height: '200px',
+            left: getTypeDisplay() == "laptop" ? "50%" : "0",
+            top: "50%",
+            "border-radius": "10px",
+            "margin-left": getTypeDisplay() == "laptop" ? "-250px" : "0",
+            "margin-top": "-100px",
+        }).delay(100, dom =>{
+            dom.children().forEach((item, ind) => {
+                item.children()[1].html("");
+                if (ind > 0) {
+                item.css({
+                    left: dom.width() + "px",
+                });
+                } else {
+                    SFR('.tema .namesrc').css({'display':'none'});
+                    item.css({
+                        left: "0px",
+                        })
+                        .children()[0]
+                        .children()[1]
+                        .children()[0]
+                        .html('Form Konfirmasi')
+                        .parent()
+                        .children()[1]
+                        .html('Message Alert')
+                        .parent().parent().parent().children()[1].html('<p>Apakah anda yakin ingin menutup CBT? jika <b>YA</b> tekan tombol <b>YAKIN</b>. Anda masih boleh melanjutkan ujian selama masih ada waktu.</p>')
+                        .parent().children()[2].html('');
+
+                    let btnYakin = new CreateButton(item.children()[2], 'Yakin', 'btn-warning');
+                        btnYakin.append();
+                        btnYakin.getButton().on('click', function(){
+                            SFR('.form1 .posback').click();
+                            if(jsonJ.status == 'belum'){
+                                if(jsonJ.data.length > 0 ){
+                                    showload();
+                                    initData(JSON.stringify(jsonJ.data));
+                                }
+                            }
+                            setTimeout(()=>{
+                                showScrollBody();
+                                SFR('.overlayExam').hide();
+                            }, 300)
+                        });
+
+                    let btnUrung = new CreateButton(item.children()[2], 'Urungkan', 'btn-success');
+                        btnUrung.append();
+                        btnUrung.getButton().on('click', function(){
+                            SFR('.form1 .posback').click();
+                        });
+                }
+            });
+        })
+    });
+});
+
+
+SFR('.btncloseExam').on('click', function(){
+    let lebarLayar = SFR('.overlayExam').width(),
+        tinggiLayar = SFR('.overlayExam').height();    
+        SFR('.footerExam').css({
+            'width': (lebarLayar>350? '350px': '90%'),
+            'left': (lebarLayar > 350? '50%': '0'),
+            'margin-left':(lebarLayar > 350?'-175px':'5%'),
+        }).delay(300, dom=>{
+            dom.css({
+                'z-index':'0'
+            });
+
+            posKiri = btnController[2].offset().left,
+            posAtas = btnController[2].offset().top - window.pageYOffset,
+            lebarController = btnController[2].width(),
+            tinggiController =  btnController[2].height();
+
+            SFR('.tombolExam').children()[0].hide().parent().css({
+                display : 'block',
+                width: lebarController + 'px',
+                height: tinggiController + 'px',
+                left:  posKiri + 'px',
+                top: posAtas + 'px',
+                'border-radius':'100%'
+            }).children()[1].hide().parent().delay(300, dom=>{
+                dom.hide();
+            });
+            SFR('.bodyExam').css({
+                'margin-left':((lebarLayar - SFR('.bodyExam').width())/2) + 'px'
+            });
+        })
+});
+
+function existJ(index){
+    let k =-1;
+    jsonJ.data.forEach((it, id)=>{
+        if(it.no == index){
+            k = id;
+        }
+    });
+    return k;
+}
+
+function openCAT(soal, today, obeng, mulai, akhir, timerpos, judul, posk){
+    SFR('.themeExam').html(judul);
+    obengs = obeng;
+    posTimer = timerpos;
+    katpos = posk;
+    endless = akhir;
+    hideScrollBody();
+    SFR('.overlayExam').show();
+    jsonS = soal;
+    currentIndex = 0;
+    if(getStorage(obeng) == null){
+        jsonJ = {
+            status: 'belum',
+            data: [],
+            tanggal: gettoday()
+        };
+        setStorage(obeng, JSON.stringify(jsonJ));
+    }
+    else{
+        jsonJ = JSON.parse(getStorage(obeng));
+    }
+    renderTombol();
+    
+    begin = today;
+    selisih = getJarakWaktu(begin, akhir, 'Detik');
+    rentang = getJarakWaktu(mulai, akhir, 'Detik');
+    beginTimers();
+    adaptiveJsonJ(posk);
+}
+function renderTombol(){
+    SFR('.containerTombol').html('');
+    jsonS.forEach((item, index)=>{
+        SFR('.containerTombol').append(`<div class="tombols">${item.no}</div>`);
+    });
+    tombols = SFR('.containerTombol').children();
+    let kiriRib =  tombols[0].offset().left,
+        atasRib =  tombols[0].offset().top-window.pageYOffset,
+        lebarRib = tombols[0].width(),
+        tinggiRib = tombols[0].height();
+    SFR('.sorotribbon').css({
+        'left':kiriRib + 'px',
+        'top':atasRib+'px',
+        'width':lebarRib+'px',
+        'height':tinggiRib +'px',
+        'display':'block',
+    });
+    tombols[0].addClass('sorot');
+    renderSoal(0);
+    SFR('.tombols').on('click', function(){
+        currentIndex = parseInt(SFR(this)[0].innerText)-1;
+        renderSoal(currentIndex);
+        hideScrollBody();
+    });
+}
+
+function renderSoal(index){
+    SFR('.tombols').removeClass('sorot');
+    let kiriRib = tombols[index].offset().left,
+        atasRib = tombols[index].offset().top-window.pageYOffset,
+        lebarRib = tombols[index].width(),
+        tinggiRib = tombols[index].height();
+    SFR('.sorotribbon').css({
+        'left':kiriRib + 'px',
+        'top':atasRib+'px',
+        'width':lebarRib+'px',
+        'height':tinggiRib +'px',
+        'border':'4px solid #7016d0',
+        'display':'block'
+    }).delay(300, dom=>{
+        dom.css({
+            'border':'none'
+        });
+        SFR('.tombols').removeClass('sorot');
+        tombols[index].addClass('sorot');
+    });
+    SFR('.headerSoal span').html('SOAL NO '+jsonS[index].no);
+    SFR('.bodySoal').html(jsonS[index].soal);
+
+    setTimeout(()=>{
+        if(SFR('.bodySoal').width()< 600){
+            let imgs = SFR('.bodySoal img');
+            imgs.forEach(item=>{
+                if(item.clientWidth > SFR('.bodySoal').width() || parseInt(item.style.width) > SFR('.bodySoal').width()){
+                    SFR(item)[0].style.transition = '0.3s'
+                    SFR(item).setAttr('width','100%');
+                    SFR(item)[0].style.width = '100%'
+                    
+                }
+            });
+        }
+    },1000);
+    renderOption(index);
+}
+
+function renderOption(index){
+    if (jsonS[index].opte == '') {
+        containerOption[5].hide();
+    } else {
+        containerOption[5].css({
+            'display':'flex'
+        }).removeClass('ragu').removeClass('yakin').children()[1]
+        .html(jsonS[index].opte);
+    }
+
+    if (jsonS[index].optd == '') {
+        containerOption[4].hide();
+    } else {
+        containerOption[4].css({
+            'display':'flex'
+        }).removeClass('ragu').removeClass('yakin').children()[1]
+        .html(jsonS[index].optd);
+    }
+
+    if (jsonS[index].optc == '') {
+        containerOption[3].hide();
+    } else {
+        containerOption[3].css({
+            'display':'flex'
+        }).removeClass('ragu').removeClass('yakin').children()[1]
+        .html(jsonS[index].optc);
+    }
+
+    if (jsonS[index].optb == '') {
+        containerOption[2].hide();
+    } else {
+        containerOption[2].css({
+            'display':'flex'
+        }).removeClass('ragu').removeClass('yakin').children()[1]
+        .html(jsonS[index].optb);
+    }
+
+    if (jsonS[index].opta == '') {
+        containerOption[1].hide();
+    } else {
+        containerOption[1].css({
+            'display':'flex'
+        }).removeClass('ragu').removeClass('yakin').children()[1]
+        .html(jsonS[index].opta);
+    }
+
+    tombols[index].removeClass('yakin').removeClass('ragu');
+
+    jsonJ.data.forEach((item, ind) => {
+        if (item.no == index) {
+            if (item.jawaban == 'A') {
+                containerOption[1].addClass(item.status)
+            } else if (item.jawaban == 'B') {
+                containerOption[2].addClass(item.status)
+            } else if (item.jawaban == 'C') {
+                containerOption[3].addClass(item.status)
+            } else if (item.jawaban == 'D') {
+                containerOption[4].addClass(item.status)
+            } else if (item.jawaban == 'E') {
+                containerOption[5].addClass(item.status)
+            }
+        }
+        if(item.no < tombols.length){
+            tombols[item.no].addClass(item.status);
+        }
+    });
+
+    MathJax.Hub.Queue(['Typeset', MathJax.Hub, SFR('.bodyExam')[0]]);
+}
+
+
+containerOption[1].on('click', function(){
+    let insert = true;
+    jsonJ.data.forEach((item, ind) => {
+        if (item.no == currentIndex) {
+            item.jawaban = 'A';
+            insert = false;
+        }
+    });
+    if (insert) {
+        jsonJ.data.push({
+            no: currentIndex,
+            jawaban: 'A',
+            status: 'yakin'
+        });
+    }
+    jsonJ.status = 'belum';
+    saveJsonJ()
+    renderOption(currentIndex);
+})
+
+containerOption[2].on('click', function(){
+    let insert = true;
+    jsonJ.data.forEach((item, ind) => {
+        if (item.no == currentIndex) {
+            item.jawaban = 'B';
+            insert = false;
+        }
+    });
+    if (insert) {
+        jsonJ.data.push({
+            no: currentIndex,
+            jawaban: 'B',
+            status: 'yakin'
+        });
+    }
+    jsonJ.status = 'belum';
+    saveJsonJ()
+    renderOption(currentIndex);
+})
+
+containerOption[3].on('click', function(){
+    let insert = true;
+    jsonJ.data.forEach((item, ind) => {
+        if (item.no == currentIndex) {
+            item.jawaban = 'C';
+            insert = false;
+        }
+    });
+    if (insert) {
+        jsonJ.data.push({
+            no: currentIndex,
+            jawaban: 'C',
+            status: 'yakin'
+        });
+    }
+    jsonJ.status = 'belum';
+    saveJsonJ()
+    renderOption(currentIndex);
+})
+
+containerOption[4].on('click', function(){
+    let insert = true;
+    jsonJ.data.forEach((item, ind) => {
+        if (item.no == currentIndex) {
+            item.jawaban = 'D';
+            insert = false;
+        }
+    });
+    if (insert) {
+        jsonJ.data.push({
+            no: currentIndex,
+            jawaban: 'D',
+            status: 'yakin'
+        });
+    }
+    jsonJ.status = 'belum';
+    saveJsonJ()
+    renderOption(currentIndex);
+})
+
+containerOption[5].on('click', function(){
+    let insert = true;
+    jsonJ.data.forEach((item, ind) => {
+        if (item.no == currentIndex) {
+            item.jawaban = 'E';
+            insert = false;
+        }
+    });
+    if (insert) {
+        jsonJ.data.push({
+            no: currentIndex,
+            jawaban: 'E',
+            status: 'yakin'
+        });
+    }
+    jsonJ.status = 'belum';
+    saveJsonJ()
+    renderOption(currentIndex);
+});
+
+function saveJsonJ(){
+    if(obengs != ''){
+        jsonJ.tanggal = gettoday();
+        setStorage(obengs, JSON.stringify(jsonJ));
+    }
+}
+
+function beginTimers(){
+    clearInterval(intervals);
+    intervals = setInterval(function() {
+        selisih--;
+        progressBarDisplay(selisih, rentang);
+        if (selisih > 0) {
+            let sisaDetik = selisih % 3600;
+            let terbagi = selisih - sisaDetik;
+            let jams = 0;
+            let menits = 0;
+            let detiks = 0;
+            if (selisih >= 3600) {
+                // kondisi lebih dari 1 jam
+                jams = terbagi / 3600;
+                if (sisaDetik > 0) {
+                    let sisaMenit = sisaDetik % 60;
+                    let dMenit = sisaDetik - sisaMenit;
+                    if (dMenit >= 60) {
+                        menits = dMenit / 60;
+                        if (sisaMenit > 0) {
+                            detiks = sisaMenit
+                        } else {
+                            detiks = 0;
+                        }
+                    } else {
+                        menits = 0;
+                        if (sisaMenit > 0) {
+                            detiks = sisaMenit
+                        } else {
+                            detiks = 0;
+                        }
+
+                    }
+                } else {
+                    menits = 0;
+                    detiks = sisaDetik;
+                }
+            } else {
+                jams = 0;
+                if (sisaDetik > 0) {
+                    var sisaMenit = sisaDetik % 60;
+                    var dMenit = sisaDetik - sisaMenit;
+                    if (dMenit >= 60) {
+                        menits = dMenit / 60;
+                        if (sisaMenit > 0) {
+                            detiks = sisaMenit
+                        } else {
+                            detiks = 0;
+                        }
+                    } else {
+                        menits = 0;
+                        if (sisaMenit > 0) {
+                            detiks = sisaMenit
+                        } else {
+                            detiks = 0;
+                        }
+                    }
+                } else {
+                    menits = 0;
+                    detiks = sisaDetik;
+                }
+            }
+            $('.timerExam').html((jams==0? '':jams + ' JAM ') + (menits==0?'':menits + ' MENIT ') + detiks + ' DETIK');
+        } else {
+            if(jsonJ.status == 'belum'){
+                if(jsonJ.data.length > 0 ){
+                    initPaksa(JSON.stringify(jsonJ.data));
+                }
+                else{
+                    endGame();
+                }
+            }
+            else{
+                endGame();
+            }
+        }
+    },
+1000);
+}
+
+function progressBarDisplay(selisih, rentang){
+    var putih = (selisih / rentang) * 100;
+    var solid =100 - putih;
+    if(solid >= 0 && solid <= 100){
+        SFR('.containerProgress .progress').css({'width':solid+'%'});
+    }
+    else{
+        SFR('.containerProgress .progress').css({'width':'100%'});
+    }
+
+    SFR('.containerProgress').removeClass('bg-soft-success').removeClass('bg-soft-warning').removeClass('bg-soft-danger')
+        .children()[0].removeClass('bg-success').removeClass('bg-warning').removeClass('bg-danger');
+    if(solid>= 0 && solid < 33){
+        SFR('.containerProgress').addClass('bg-soft-success').children()[0].addClass('bg-success');
+    }
+    else if(solid >=33 && solid < 66){
+        SFR('.containerProgress').addClass('bg-soft-warning').children()[0].addClass('bg-warning');
+    }
+    else if(solid >=66){
+        SFR('.containerProgress').addClass('bg-soft-danger').children()[0].addClass('bg-danger');
+    }
+}
+
+function initData(data){
+    if(selisih%2==0){
+        getData('local', {
+            token : getCookie('token'),
+            order : 'sendme',
+            data:data,
+            posk: katpos
+        }, function(resp){
+            if(resp.response == 'success'){
+                jsonJ.status = 'sudah';
+                saveJsonJ();
+                selisih = getJarakWaktu(resp.data, endless, 'Detik');
+                hideload();
+            }
+            else{
+                setTimeout(()=>{
+                    initData(data);
+                }, (Math.floor(Math.random() * 15) + 3) * 100000);
+            }
+        })
+    }
+    else{
+    let formData = new FormData();
+        formData.append('ans', data);
+        formData.append('order', 'sendme');
+        formData.append('posm', profiles.posm);
+        formData.append('posk', katpos);
+        formData.append('token', getCookie('token'));
+        $.ajax({
+            type: 'POST',
+            url: base64_decode('aHR0cHM6Ly9vcC5wdXNhdHByZXN0YXNpLmlkL2FwcC9hcHAtYXNzZXRzL2pzL215anMvZW5naW5lL2Fucy5waHA='),
+            data: formData,
+            processData: false,
+            contentType: false,
+            beforeSend: function() {},
+            success: function(resp) {
+                if (resp.response == 'success') {
+                    jsonJ.status = 'sudah';
+                    saveJsonJ();
+                    selisih = getJarakWaktu(resp.today, endless, 'Detik');
+                    hideload();
+                } 
+            },
+            error: function(xhr, ajaxOptions, thrownError) {
+                setTimeout(function() {
+                    initData(data);
+                }, (Math.floor(Math.random() * 15) + 3) * 100000);
+            }
+        });
+    }
+}
+
+function initPaksa(data){
+    showload();
+    if(selisih%2==0){
+        getData('local', {
+            token : getCookie('token'),
+            order : 'sendme',
+            data:data,
+            posk: katpos
+        }, function(resp){
+            if(resp.response == 'success'){
+                jsonJ.status = 'sudah';
+                saveJsonJ();
+                selisih = getJarakWaktu(resp.data, endless, 'Detik');
+                console.log('cbt serv');
+                hideload();
+                endGame();
+                showToast('Waktu ujian telah usai. Terima Kasih telah menjadi siswa aktif Indonesia','success');
+            }
+            else{
+                setTimeout(()=>{
+                    initPaksa(data);
+                }, (Math.floor(Math.random() * 15) + 3) * 100000);
+            }
+        })
+    }
+    else{
+    let formData = new FormData();
+        formData.append('ans', data);
+        formData.append('order', 'sendme');
+        formData.append('posm', profiles.posm);
+        formData.append('posk', katpos);
+        formData.append('token', getCookie('token'));
+        $.ajax({
+            type: 'POST',
+            url: base64_decode('aHR0cHM6Ly9vcC5wdXNhdHByZXN0YXNpLmlkL2FwcC9hcHAtYXNzZXRzL2pzL215anMvZW5naW5lL2Fucy5waHA='),
+            data: formData,
+            processData: false,
+            contentType: false,
+            beforeSend: function() {},
+            success: function(resp) {
+                if (resp.response == 'success') {
+                    jsonJ.status = 'sudah';
+                    saveJsonJ();
+                    selisih = getJarakWaktu(resp.today, endless, 'Detik');
+                    console.log('op serv');
+                    hideload();
+                    endGame();
+                    showToast('Waktu ujian telah usai. Terima Kasih telah menjadi siswa aktif Indonesia','success');
+   
+                } 
+            },
+            error: function(xhr, ajaxOptions, thrownError) {
+                setTimeout(function() {
+                    initPaksa(data);
+                }, (Math.floor(Math.random() * 15) + 3) * 100000);
+            }
+        });
+    }
+}
+
+function adaptiveJsonJ(posk){
+    getData('local', {
+        token : getCookie('token'),
+        order : 'adaptive',
+        posk: posk
+    }, function(resp){
+        if(resp.response == 'success'){
+            if(jsonJ.data.length < resp.data.length){
+                jsonJ.data = resp.data;
+                renderOption(currentIndex);
+            }
+        }
+    })
+}
+
+function endGame(){
+    showScrollBody();
+    SFR('.overlayExam').hide();
+    if(SFR('#'+ posTimer).length>0){
+        SFR('#'+ posTimer).delete();
+    }
+    forceDirectRiwayat();
+}

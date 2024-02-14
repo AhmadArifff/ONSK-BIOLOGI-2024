@@ -1,0 +1,574 @@
+let btnBanner = document.getElementById("btnBanner").children,
+  btnCanvas = SFR("#btnCanvas").children(),
+  minimCanvas = {},
+  paintCanvas = document.getElementById("paintCanvas"),
+  lebarCanvas = (tinggiCanvas = 0),
+  myHistory = {
+    origW: 0,
+    origH: 0,
+    data: [],
+  },
+  myOldHistory = {
+    data: [],
+  },
+  dataPens = [],
+  boolCanvasOpen = false,
+  boolIHaveQuiz = false,
+  bannerData = "",
+  posQuiz = -1;
+
+window.addEventListener("resize", () => {
+  // resize and re-render
+  showDailyQuiz(bannerData);
+  setTimeout(() => {
+    adaptifDataWithNewScreen((resp) => {
+      if (resp) {
+        renderHistory();
+      }
+    });
+  }, 300);
+});
+
+function adaptifDataWithNewScreen(cb) {
+  myHistory.data.forEach((item, index) => {
+    item.forEach((el, idx) => {
+      myHistory.data[index][idx].x = transformasiBidang(
+        myHistory.data[index][idx].x,
+        myHistory.origW,
+        SFR(".cardCanvas").width()
+      );
+      myHistory.data[index][idx].y = transformasiBidang(
+        myHistory.data[index][idx].y,
+        myHistory.origH,
+        SFR(".cardCanvas").height()
+      );
+    });
+  });
+  myHistory.origW = SFR(".cardCanvas").width();
+  myHistory.origH = SFR(".cardCanvas").height();
+  cb(true);
+}
+const context = paintCanvas.getContext("2d");
+context.lineCap = "round";
+let x = 0,
+  y = 0;
+let isMouseDown = false;
+
+function showDailyQuiz(banner) {
+  if (boolIHaveQuiz) {
+    hideScrollBody();
+    SFR(".bannerDaily img").setAttr("src", banner);
+    var lebar = screen.width,
+      tinggi = screen.height,
+      lebarPrev = (lebar * 2) / 3,
+      tinggiPrev = lebarPrev / 1.618,
+      margH = -(lebarPrev / 2) + "px",
+      margV = -(tinggiPrev / 2) + "px";
+
+    if (lebar < 700) {
+      //handphone
+      lebarPrev = lebar - 10;
+      tinggiPrev = lebarPrev / 1.618;
+      margH = -(lebarPrev / 2) + "px";
+      margV = -(tinggiPrev / 2) + "px";
+      SFR(".btnMin").css({
+        width: "20px",
+        height: "20px",
+        "line-height": "12px",
+        "font-size": "10px",
+      });
+    } else if (lebar >= 700 && lebar <= 1100) {
+      lebarPrev = (lebar * 3) / 4;
+      tinggiPrev = lebarPrev / 1.618;
+      margH = -(lebarPrev / 2) + "px";
+      margV = -(tinggiPrev / 2) + "px";
+      SFR(".btnMin").css({
+        width: "30px",
+        height: "30px",
+        "line-height": "12px",
+        "font-size": "12px",
+      });
+    }
+    // kalaulah tinggi videoPrev lebih gedek dari layar tersedia
+    if (tinggiPrev >= tinggi) {
+      tinggiPrev = tinggi - 10;
+      margV = -(tinggiPrev / 2) + "px";
+    }
+    SFR(".dailyQuiz").show();
+    SFR(".formDaily").css({
+      width: lebarPrev + "px",
+      height: tinggiPrev + "px",
+      right: "50%",
+      bottom: "50%",
+      "border-radius": "0",
+      "margin-bottom": margV,
+      "margin-right": margH,
+    });
+    SFR(".dispUtama").hide();
+  }
+}
+
+SFR(".btnMin").on("click", function () {
+  SFR(".dailyQuiz").hide();
+  showScrollBody();
+  boolIHaveQuiz = false;
+  SFR(".dispUtama").show();
+});
+
+btnBanner[0].addEventListener("click", function () {
+  // show canvas
+  boolCanvasOpen = true;
+  var atas =
+      $(this).offset().top -
+      SFR(this).scrollTop() -
+      SFR(".formDaily").offset().top,
+    kiri = $(this).offset().left - SFR(".formDaily").offset().left;
+
+  minimCanvas = {
+    atas: atas,
+    kiri: kiri,
+  };
+  SFR(".cardCanvas").css({
+    width: 50 + "px",
+    height: 40 + "px",
+    left: kiri + "px",
+    top: atas + "px",
+    "border-radius": "30px",
+  });
+  SFR(".cardCanvas").show();
+
+  setTimeout(() => {
+    SFR(".cardCanvas").css({
+      width: "100%",
+      height: "100%",
+      "border-radius": "0px",
+      left: "0px",
+      top: "0px",
+    });
+    SFR("#painCanvas").show();
+    SFR("#btnCanvas").css({
+      display: "flex",
+    });
+
+    setCanvasDimensi((resp) => {
+      if (resp) {
+        myHistory.origW = SFR(".cardCanvas").width();
+        myHistory.origH = SFR(".cardCanvas").height();
+        renderHistory();
+        SFR(".cardCanvas span").show();
+      }
+    });
+  }, 100);
+});
+
+function setCanvasDimensi(cb) {
+  setTimeout(() => {
+    lebarCanvas = SFR(".cardCanvas").width();
+    tinggiCanvas = SFR(".cardCanvas").height();
+    paintCanvas.width = lebarCanvas;
+    paintCanvas.height = tinggiCanvas;
+    cb(true);
+  }, 120);
+}
+
+btnCanvas[0].on("click", function () {
+  paintCanvas.width = 0;
+  paintCanvas.height = 0;
+  SFR(".cardCanvas span").hide();
+  SFR(".cardCanvas").css({
+    width: 50 + "px",
+    height: 40 + "px",
+    left: minimCanvas.kiri + "px",
+    top: minimCanvas.atas + "px",
+    "border-radius": "30px",
+  });
+  SFR("#btnCanvas").hide();
+  SFR("#painCanvas").hide();
+
+  setTimeout(() => {
+    SFR(".cardCanvas").hide();
+  }, 300);
+  boolCanvasOpen = false;
+});
+
+btnCanvas[1].on("click", function () {
+  myOldHistory.data = [];
+  for (i = myHistory.data.length - 1; i >= 0; i--) {
+    myOldHistory.data.push(myHistory.data[i]);
+  }
+  myHistory.data = [];
+  renderHistory();
+});
+
+btnCanvas[2].on("click", function () {
+  undoQ();
+});
+
+btnCanvas[3].on("click", function () {
+  redoQ();
+});
+
+btnCanvas[4].on("click", function () {
+  if (myHistory.data.length > 0 && posQuiz != -1) {
+    kiri = SFR(this).offset().left;
+    atas = SFR(this).offset().top - window.pageYOffset;
+    lebar = SFR(this).width();
+    tinggi = SFR(this).height();
+    SFR(".overlayForm")
+      .css({
+        display: "block",
+      })
+      .delay(10, (dom) => {
+        hideScrollBody();
+        SFR(".mainform")
+          .css({
+            display: "block",
+            width: getTypeDisplay() == "laptop" ? "500px" : "100%",
+            height: "220px",
+            left: getTypeDisplay() == "laptop" ? "50%" : "0",
+            top: "50%",
+            "border-radius": "10px",
+            "margin-left": getTypeDisplay() == "laptop" ? "-250px" : "0",
+            "margin-top": "-110px",
+          })
+          .delay(100, (dom) => {
+            dom.children().forEach((item, ind) => {
+              item.children()[1].html("");
+              if (ind > 0) {
+                item.css({
+                  left: dom.width() + "px",
+                });
+              } else {
+                SFR(".tema .namesrc").css({ display: "none" });
+                item
+                  .css({
+                    left: "0px",
+                  })
+                  .children()[0]
+                  .children()[1]
+                  .children()[0]
+                  .html("Form Konfirmasi")
+                  .parent()
+                  .children()[1]
+                  .html("Message Alert")
+                  .parent()
+                  .parent()
+                  .parent()
+                  .children()[1]
+                  .html(
+                    "<p>Anda hanya boleh mengirim jawaban sekali untuk setiap Quiz. Yakin mau mengirim jawaban?</p>"
+                  )
+                  .parent()
+                  .children()[2]
+                  .html("");
+                let kirim = new CreateButton(
+                  item.children()[2],
+                  "Yakin",
+                  "btn-success"
+                );
+                kirim.append();
+                kirim.getButton().on("click", function () {
+                  showload();
+                  getData('profiles',
+                    {
+                        order: "jawabquiz",
+                        token: getCookie('token'),
+                        coretan: JSON.stringify(myHistory),
+                        pos: posQuiz,
+                        subjek : profiles.subjek,
+                        jenjang : profiles.jenjang,
+                        prov : profiles.provinsi,
+                        kab : profiles.kab_kota,
+                        sekolah : profiles.sekolah,
+                        nama : profiles.nama,
+                        kontak : profiles.kontak
+                    },
+                    function (resp) {
+                      if (resp.response == "success") {
+                        showToast(resp.data.message, resp.data.status);
+                        if(resp.data.status == 'success'){
+                            SFR('.form1 .posback').click().delay(300, dom=>{
+                                SFR(".btnMin").click();
+                            });
+                        }
+                        else{
+                            SFR('.form1 .posback').click()
+                        }
+                      }
+                      hideload();
+                    }
+                  );
+                });
+
+                let batal = new CreateButton(
+                  item.children()[2],
+                  "Urungkan",
+                  "btn-danger"
+                );
+                batal.append();
+                batal.getButton().on("click", function () {
+                  SFR(".form1 .posback").click();
+                });
+              }
+            });
+          });
+      });
+    // openLayer('layerInput1', '590', '220', 'red', 'ft-alert-triangle', 'Penting', function(ready, btnClose, layer) {
+    //     if (ready) {
+    //         var btnPeriksa = createButton('Periksa Ulang', layer, 'orange');
+    //         var btnYakin = createButton('Yakin', layer, 'blue');
+
+    //         var label = createLabel(layer, "Anda hanya boleh mengirim jawaban sekali untuk setiap Quiz. Yakin mau mengirim jawaban?");
+    //         btnPeriksa.addEventListener('click', function() {
+    //             btnClose.click();
+    //         });
+    //         btnYakin.addEventListener('click', function() {
+
+    //         });
+    //     }
+
+    // });
+  } else {
+    showToast("Belum ada coretan pada WhiteBoard", "error");
+  }
+});
+
+const stopDrawings = () => {
+  isMouseDown = false;
+  if (dataPens.length > 0) {
+    if (myHistory.data.length == 0) {
+      myHistory.data.push(dataPens);
+      myOldHistory.data = [];
+    } else {
+      if (
+        myHistory.data[myHistory.data.length - 1][
+          myHistory.data[myHistory.data.length - 1].length - 1
+        ].x != dataPens[dataPens.length - 1].x &&
+        myHistory.data[myHistory.data.length - 1][
+          myHistory.data[myHistory.data.length - 1].length - 1
+        ].y != dataPens[dataPens.length - 1].y
+      ) {
+        myHistory.data.push(dataPens);
+        myOldHistory.data = [];
+        renderHistory();
+      }
+    }
+  }
+};
+const startDrawings = (event) => {
+  dataPens = [];
+  isMouseDown = true;
+  [x, y] = [event.offsetX, event.offsetY];
+  dataPens.push({
+    x: x,
+    y: y,
+  });
+};
+
+const startDrawingt = (event) => {
+  dataPens = [];
+  isMouseDown = true;
+  [x, y] = [
+    event.touches[0].clientX - SFR(".cardCanvas").offset().left,
+    event.touches[0].clientY - SFR(".cardCanvas").offset().top,
+  ];
+  dataPens.push({
+    x: x,
+    y: y,
+  });
+};
+const drawLines = (event) => {
+  if (isMouseDown) {
+    const newX = event.offsetX;
+    const newY = event.offsetY;
+
+    context.beginPath();
+    context.moveTo(x, y);
+    context.lineTo(newX, newY);
+    context.stroke();
+    //[x, y] = [newX, newY];
+    dataPens.push({
+      x: newX,
+      y: newY,
+    });
+    x = newX;
+    y = newY;
+  }
+};
+
+const drawLinet = (event) => {
+  if (isMouseDown) {
+    const newX = event.touches[0].clientX - SFR(".cardCanvas").offset().left;
+    const newY = event.touches[0].clientY - SFR(".cardCanvas").offset().top;
+
+    context.beginPath();
+    context.moveTo(x, y);
+    context.lineTo(newX, newY);
+    context.stroke();
+    //[x, y] = [newX, newY];
+    dataPens.push({
+      x: newX,
+      y: newY,
+    });
+    x = newX;
+    y = newY;
+  }
+};
+paintCanvas.addEventListener("mousedown", startDrawings);
+paintCanvas.addEventListener("mousemove", drawLines);
+paintCanvas.addEventListener("mouseup", stopDrawings);
+paintCanvas.addEventListener("mouseout", stopDrawings);
+
+paintCanvas.addEventListener("touchstart", startDrawingt, false);
+paintCanvas.addEventListener("touchmove", drawLinet, false);
+paintCanvas.addEventListener("touchend", stopDrawings, false);
+paintCanvas.addEventListener("touchcancel", stopDrawings, false);
+
+let x0,
+  y0 = 0;
+
+function renderHistory() {
+  setCanvasDimensi((resp) => {
+    if (resp) {
+      myHistory.data.forEach((item, idx) => {
+        bzCurveLayerRasio(
+          context,
+          item,
+          0.3,
+          1,
+          1,
+          "black",
+          myHistory.origH,
+          myHistory.origW
+        );
+      });
+    }
+  });
+}
+
+function bzCurveLayerRasio(
+  kontext,
+  points,
+  f,
+  t,
+  penWidth,
+  penColor,
+  oldLayH,
+  oldLayW
+) {
+  if (typeof f == "undefined") f = 0.3;
+  if (typeof t == "undefined") t = 0.6;
+
+  var layerW = SFR(".cardCanvas").width(),
+    layerH = SFR(".cardCanvas").height();
+
+  kontext.beginPath();
+  // transformasiBidang(target, dimensiLama, dimensiBaru)
+  kontext.moveTo(
+    transformasiBidang(points[0].x, oldLayW, layerW),
+    transformasiBidang(points[0].y, oldLayH, layerH)
+  );
+
+  var m = 0;
+  var dx1 = 0;
+  var dy1 = 0;
+
+  var preP = points[0];
+  kontext.globalCompositeOperation = "source-over";
+  for (var i = 1; i < points.length; i++) {
+    var curP = points[i];
+    nexP = points[i + 1];
+    if (nexP) {
+      m = gradient(preP, nexP);
+      dx2 =
+        (transformasiBidang(nexP.x, oldLayW, layerW) -
+          transformasiBidang(curP.x, oldLayW, layerW)) *
+        -f;
+      dy2 = dx2 * m * t;
+    } else {
+      dx2 = 0;
+      dy2 = 0;
+    }
+    kontext.lineWidth = penWidth;
+    kontext.strokeStyle = penColor;
+    kontext.lineCap = "round";
+    kontext.bezierCurveTo(
+      transformasiBidang(preP.x, oldLayW, layerW) - dx1,
+      transformasiBidang(preP.y, oldLayH, layerH) - dy1,
+      transformasiBidang(curP.x, oldLayW, layerW) + dx2,
+      transformasiBidang(curP.y, oldLayH, layerH) + dy2,
+      transformasiBidang(curP.x, oldLayW, layerW),
+      transformasiBidang(curP.y, oldLayH, layerH)
+    );
+    dx1 = dx2;
+    dy1 = dy2;
+    preP = curP;
+  }
+  kontext.stroke();
+}
+
+function transformasiBidang(target, dimensiLama, dimensiBaru) {
+  return (target / dimensiLama) * dimensiBaru;
+}
+
+function gradient(a, b) {
+  return (b.y - a.y) / (b.x - a.x);
+}
+window.addEventListener("keydown", function (e) {
+  if (e.key == "y" && e.ctrlKey) {
+    btnCanvas[3].click();
+  } else if (e.key == "z" && e.ctrlKey) {
+    btnCanvas[2].click();
+  }
+});
+
+function undoQ() {
+  if (boolCanvasOpen) {
+    if (myHistory.data.length > 0) {
+      let lastIndex = myHistory.data.length - 1;
+      myOldHistory.data.push(myHistory.data[lastIndex]);
+      myHistory.data.pop();
+      renderHistory();
+    }
+  }
+}
+
+function redoQ() {
+  if (boolCanvasOpen) {
+    if (myOldHistory.data.length > 0) {
+      let lastIndex = myOldHistory.data.length - 1;
+      myHistory.data.push(myOldHistory.data[lastIndex]);
+      myOldHistory.data.pop();
+      renderHistory();
+    }
+  }
+}
+
+// getDataQuiz(true);
+
+function getDataQuiz(natural) {
+  getData(
+    "profiles",
+    {
+      order: "getquiz",
+      token: getCookie("token"),
+      subjek: profiles.subjek,
+      jenjang: profiles.jenjang,
+      provinsi: profiles.provinsi,
+    },
+    function (resp) {
+      if (resp.response == "success") {
+            if (resp.data.length > 0) {
+                boolIHaveQuiz = true;
+                bannerData = resp.data[0].banner;
+                showDailyQuiz(resp.data[0].banner);
+                posQuiz = resp.data[0].pos;
+            } else {
+                if (!natural) {
+                    showToast("Belum ada quiz", "error");
+                }
+            }
+      }
+    }
+  );
+}

@@ -1,0 +1,165 @@
+var beginX = 0,
+    beginY = 0,
+    endX = 0,
+    endY = 0;
+    const canvas = document.getElementById('certdisp');
+    const ctx = canvas.getContext('2d');
+function openCert(template, judul){
+    dontDisturbme = true;
+    printKontext = 'cert'
+    certArr = template;
+    invTheme = judul;
+    $('#printerasset').show();
+    SFR('.headerAsset .theme').html('SERTIFIKAT <br/>'+ judul);
+    hideScrollBody();
+    let bentangLayar = SFR("body").width();
+    SFR(".overlayAsset").show();
+    SFR(".contentAsset").show().delay(100, dom=>{
+        dom.css({
+            width: (certArr.lanscape? (SFR('body').width()> 1271? '1271px': (bentangLayar-20) + 'px'):
+            (bentangLayar>900? '900px': (bentangLayar-20))),
+            "margin-left":
+            (certArr.lanscape? (bentangLayar > 1271? (bentangLayar - 1271)/2 + 'px':  '10px'):
+            (bentangLayar > 900? (bentangLayar - 900)/2+'px':'10px')),
+          });
+    })
+
+    
+    SFR('#certdisp').show();
+    canvas.width = 0;
+    canvas.height = 0;
+    if (certArr.lanscape) {
+        canvas.width = 1271;
+        canvas.height = 900;
+        drawLineCanvas();
+    } else {
+        canvas.height = 1271;
+        canvas.width = 900;
+        drawLineCanvas();
+    }
+}
+
+function openPiag(template, judul){
+    dontDisturbme = true;
+    printKontext = 'piag'
+    certArr = template;
+    invTheme = judul;
+    $('#printerasset').show();
+    SFR('.headerAsset .theme').html('PIAGAM <br/>'+ judul);
+    hideScrollBody();
+    let bentangLayar = SFR("body").width();
+    SFR(".overlayAsset").show();
+    SFR(".contentAsset").show().delay(100, dom=>{
+        dom.css({
+            width: (certArr.lanscape? (SFR('body').width()> 1271? '1271px': (bentangLayar-20) + 'px'):
+            (bentangLayar>900? '900px': (bentangLayar-20)+'px')),
+            "margin-left":
+            (certArr.lanscape? (bentangLayar > 1271? (bentangLayar - 1271)/2 + 'px':  '10px'):
+            (bentangLayar > 900? ((bentangLayar - 900)/2)+'px':'10px')),
+          });
+    });
+
+
+    
+    SFR('#certdisp').show();
+    canvas.width = 0;
+    canvas.height = 0;
+    if (certArr.lanscape) {
+        canvas.width = 1271;
+        canvas.height = 900;
+        drawLineCanvas();
+    } else {
+        canvas.height = 1271;
+        canvas.width = 900;
+        drawLineCanvas();
+    }
+}
+
+function drawLineCanvas() {
+    var img = new Image();
+    img.onload = function(e) {
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        // ctx.textBaseline = 'top';
+        setLabel('norut');
+        setLabel('nama');
+        setLabel('sekolah');
+        setLabel('provinsi');
+        setLabel('kabupaten');
+        setLabel('bidang');
+        setLabel('jenjang');
+        setLabel('tingkat');
+        setLabel('medalis');
+        setLabel('predikat');
+        setLabel('barcode');
+        SFR(".contentAsset ").html('');
+        setTimeout(()=>{
+            let imageData = canvas.toDataURL("image/png");
+            SFR(".contentAsset ").append(`<img src="${imageData}" class="imginv"/>`);
+            showToast('Certificate rendered', 'success');
+            SFR(
+              ".overlayAsset .contentAsset"
+            )[0].style.backgroundPositionY = "120%";
+            dontDisturbme = false;
+        },1000);
+    };
+    img.src = certArr.baseimg;
+}
+
+function setLabel(label) {
+    if (certArr[label].beginX != '0') {
+
+        ctx.strokeStyle = "#e2d8d8";
+        ctx.lineWidth = 1;
+
+        ctx.fillStyle = certArr[label].color;
+        ctx.font = certArr[label].fontSize + "px Calibri, sans-serif";
+
+        var panjangKotak = Math.abs(certArr[label].beginX - certArr[label].endX);
+        var panjangText = ctx.measureText(filterAin(certArr[label].label)).width;
+        if (certArr[label].textAlign == 'left') {
+            // left kan
+            if (certArr[label].label == 'barcode.png') {
+                var image = new Image();
+                image.src = certArr[label].color;
+                image.onload = function() {
+                    ctx.drawImage(image, certArr[label].beginX, certArr[label].beginY - 125, 125, 125);
+                }
+            } else {
+                if (label == 'predikat') {
+                    if (certArr[label].label.length == 2) {
+                        ctx.fillText(certArr[label].label.charAt(0), certArr[label].beginX, certArr[label].beginY - 5);
+                        ctx.fillText(certArr[label].label.charAt(1), certArr[label].beginX + 15, certArr[label].beginY - 13);
+                    } else {
+                        ctx.fillText(certArr[label].label, certArr[label].beginX, certArr[label].beginY - 5);
+                    }
+                } else {
+                    ctx.fillText(filterAin(certArr[label].label), certArr[label].beginX, certArr[label].beginY - 5);
+                }
+
+            }
+        } else {
+            // center
+            if (certArr[label].label == 'barcode.png') {
+                var image = new Image();
+                image.src = certArr[label].color;
+                image.onload = function() {
+                    ctx.drawImage(image, certArr[label].beginX, certArr[label].beginY - 125, 125, 125);
+                }
+            } else {
+                var leftNamaFromKotak = (panjangKotak - panjangText) / 2;
+                var marginLeft = (certArr[label].beginX + leftNamaFromKotak);
+                if (label == 'predikat') {
+                    if (certArr[label].label.length == 2) {
+                        ctx.fillText(certArr[label].label.charAt(0), marginLeft, certArr[label].beginY - 5);
+                        ctx.fillText(certArr[label].label.charAt(1), marginLeft+15, certArr[label].beginY - 13);
+                    } else {
+                        ctx.fillText(certArr[label].label, marginLeft, certArr[label].beginY - 5);
+                    }
+                } else {
+                    ctx.fillText(filterAin(certArr[label].label), marginLeft, certArr[label].beginY - 5);
+                }
+
+            }
+        }
+    }
+}

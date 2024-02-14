@@ -1,0 +1,1152 @@
+// var origlink = 'http://192.168.0.8/newgen';
+// var origlink = 'http://localhost/newgen';
+var origlink = 'https://cbt.pusatprestasi.id';
+var assetmedia = 'https://asetmedia.s3.ap-southeast-1.amazonaws.com';
+function showload() {
+    // SFR('.loader').removeClass('animate__animated');
+    SFR(".loader").removeClass("animate__fadeOut");
+    SFR(".loader").removeClass("d-none");
+}
+
+
+function hideload() {
+    // SFR('.loader').addClass('');
+    SFR(".loader").addClass("animate__fadeOut");
+    SFR(".loader").addClass("d-none");
+}
+
+function getTypeDisplay() {
+    let display = SFR("body");
+    if (display.width() > 575) {
+        return "laptop";
+    }
+    return "mobile";
+}
+
+class CreateInput {
+    constructor(container, type, value, item, placeholder) {
+        this.container = container;
+        this.type = type;
+        this.value = value;
+        this.item = item;
+        this.placeholder = placeholder;
+        this.inputer;
+        this.formgroup;
+    }
+    append() {
+        this.formgroup = document.createElement("div");
+        this.formgroup.className = "form-group";
+        this.formgroup.id =pureItAsId(this.placeholder);
+        this.container.addChild(this.formgroup);
+        let label = document.createElement("label");
+        label.className = "form-label";
+        label.innerHTML = this.placeholder;
+        SFR(this.formgroup).addChild(label);
+        switch (this.type) {
+            case "text":
+                let inputText = document.createElement("input");
+                inputText.className = "form-control";
+                inputText.placeholder = this.placeholder;
+                inputText.type = this.type;
+                inputText.value = this.value;
+                SFR(this.formgroup).addChild(inputText);
+                this.inputer = inputText;
+                break;
+            case "number":
+                let inputNumber = document.createElement("input");
+                inputNumber.className = "form-control";
+                inputNumber.placeholder = this.placeholder;
+                inputNumber.type = this.type;
+                inputNumber.value = this.value;
+                SFR(this.formgroup).addChild(inputNumber);
+                this.inputer = inputNumber;
+                break;
+            case "date":
+                let inputDate = document.createElement("input");
+                inputDate.className = "form-control";
+                inputDate.placeholder = this.placeholder;
+                inputDate.type = this.type;
+                inputDate.value = this.value;
+                SFR(this.formgroup).addChild(inputDate);
+                this.inputer = inputDate;
+                break;
+            case "password":
+                let inputPass = document.createElement("input");
+                inputPass.className = "form-control";
+                inputPass.placeholder = this.placeholder;
+                inputPass.type = this.type;
+                inputPass.value = this.value;
+                SFR(this.formgroup).addChild(inputPass);
+
+                let span = document.createElement("span");
+                SFR(this.formgroup).addChild(span);
+                span.innerHTML = `<svg fill="none" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                     <path fill-rule="evenodd" clip-rule="evenodd" d="M15.1614 12.0531C15.1614 13.7991 13.7454 15.2141 11.9994 15.2141C10.2534 15.2141 8.83838 13.7991 8.83838 12.0531C8.83838 10.3061 10.2534 8.89111 11.9994 8.89111C13.7454 8.89111 15.1614 10.3061 15.1614 12.0531Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                     <path fill-rule="evenodd" clip-rule="evenodd" d="M11.998 19.355C15.806 19.355 19.289 16.617 21.25 12.053C19.289 7.48898 15.806 4.75098 11.998 4.75098H12.002C8.194 4.75098 4.711 7.48898 2.75 12.053C4.711 16.617 8.194 19.355 12.002 19.355H11.998Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                  </svg>`;
+                span.addEventListener("click", function() {
+                    if (inputPass.type == "password") {
+                        inputPass.type = "text";
+                        span.innerHTML = `<svg fill="none" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                            <path d="M9.76045 14.3667C9.18545 13.7927 8.83545 13.0127 8.83545 12.1377C8.83545 10.3847 10.2474 8.97168 11.9994 8.97168C12.8664 8.97168 13.6644 9.32268 14.2294 9.89668" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                            <path d="M15.1049 12.6987C14.8729 13.9887 13.8569 15.0067 12.5679 15.2407" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                            <path d="M6.65451 17.4722C5.06751 16.2262 3.72351 14.4062 2.74951 12.1372C3.73351 9.85823 5.08651 8.02823 6.68351 6.77223C8.27051 5.51623 10.1015 4.83423 11.9995 4.83423C13.9085 4.83423 15.7385 5.52623 17.3355 6.79123" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                            <path d="M19.4473 8.99072C20.1353 9.90472 20.7403 10.9597 21.2493 12.1367C19.2823 16.6937 15.8063 19.4387 11.9993 19.4387C11.1363 19.4387 10.2853 19.2987 9.46729 19.0257" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                            <path d="M19.8868 4.24951L4.11279 20.0235" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                          </svg>`;
+                    } else {
+                        inputPass.type = "password";
+                        span.innerHTML = `<svg fill="none" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                            <path fill-rule="evenodd" clip-rule="evenodd" d="M15.1614 12.0531C15.1614 13.7991 13.7454 15.2141 11.9994 15.2141C10.2534 15.2141 8.83838 13.7991 8.83838 12.0531C8.83838 10.3061 10.2534 8.89111 11.9994 8.89111C13.7454 8.89111 15.1614 10.3061 15.1614 12.0531Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                            <path fill-rule="evenodd" clip-rule="evenodd" d="M11.998 19.355C15.806 19.355 19.289 16.617 21.25 12.053C19.289 7.48898 15.806 4.75098 11.998 4.75098H12.002C8.194 4.75098 4.711 7.48898 2.75 12.053C4.711 16.617 8.194 19.355 12.002 19.355H11.998Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                                          </svg>`;
+                    }
+                });
+                this.inputer = inputPass;
+                break;
+            case "combo":
+                let inputCombo = document.createElement("input");
+                inputCombo.className = "form-control";
+                inputCombo.placeholder = this.placeholder;
+                inputCombo.type = this.type;
+                inputCombo.value = this.value;
+                inputCombo.readOnly = true;
+                SFR(this.formgroup).addChild(inputCombo);
+
+                let spanCombo = document.createElement("span");
+                SFR(this.formgroup).addChild(spanCombo);
+                spanCombo.innerHTML = `<svg fill="none" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                          <path d="M10.869 16.6308C10.811 16.5743 10.563 16.3609 10.359 16.1622C9.076 14.9971 6.976 11.9576 6.335 10.3668C6.232 10.1252 6.014 9.51437 6 9.18802C6 8.8753 6.072 8.5772 6.218 8.29274C6.422 7.93814 6.743 7.65368 7.122 7.49781C7.385 7.39747 8.172 7.2416 8.186 7.2416C9.047 7.08573 10.446 7 11.992 7C13.465 7 14.807 7.08573 15.681 7.21335C15.695 7.22796 16.673 7.38383 17.008 7.55431C17.62 7.86702 18 8.47784 18 9.13151V9.18802C17.985 9.61374 17.605 10.509 17.591 10.509C16.949 12.0141 14.952 14.9834 13.625 16.1768C13.625 16.1768 13.284 16.5129 13.071 16.659C12.765 16.887 12.386 17 12.007 17C11.584 17 11.19 16.8724 10.869 16.6308Z" fill="currentColor" />
+                                      </svg>`;
+                this.inputer = inputCombo;
+
+                spanCombo.addEventListener('click', function() {
+                    inputCombo.click();
+                })
+                break;
+            case 'textarea':
+                let textarea = document.createElement('textarea');
+                textarea.className = "form-control";
+                textarea.value = this.value;
+                textarea.rows = 5;
+                this.inputer = textarea;
+                textarea.placeholder = this.placeholder;
+                SFR(this.formgroup).addChild(textarea);
+
+                break;
+        }
+    }
+    buildCombo(cb) {
+        if (this.type == "combo") {
+            cb = cb || function() {};
+            let arrItems = this.item;
+            let formCombo = document.createElement("div");
+            formCombo.className = "formCombo z-depth-2";
+
+            let headerCombo = document.createElement("div");
+            headerCombo.className = "headerCombo";
+            formCombo.appendChild(headerCombo);
+
+            let bodyCombo = document.createElement("div");
+            bodyCombo.className = "bodyCombo";
+            formCombo.appendChild(bodyCombo);
+
+            let searchInput = document.createElement("input");
+            searchInput.className = "form-control searchCombo";
+            searchInput.setAttribute("placeholder", "cari...");
+
+            let iconSearch = document.createElement("div");
+            iconSearch.className = "iconinput";
+            iconSearch.innerHTML = `<svg class="svg-icon" style="width: 1em;height: 1em;vertical-align: middle;fill: currentColor;overflow: hidden;" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M192 480a256 256 0 1 1 512 0 256 256 0 0 1-512 0m631.776 362.496l-143.2-143.168A318.464 318.464 0 0 0 768 480c0-176.736-143.264-320-320-320S128 303.264 128 480s143.264 320 320 320a318.016 318.016 0 0 0 184.16-58.592l146.336 146.368c12.512 12.48 32.768 12.48 45.28 0 12.48-12.512 12.48-32.768 0-45.28"  /></svg>`;
+            headerCombo.appendChild(searchInput);
+            headerCombo.appendChild(iconSearch);
+            SFR(this.formgroup).addChild(formCombo);
+            formCombo.style.width = this.inputer.clientWidth + "px";
+            formCombo.style.marginTop = -this.inputer.clientHeight + "px";
+            let mouse_in = false;
+            formCombo.addEventListener("mouseover", function() {
+                mouse_in = true;
+            });
+            formCombo.addEventListener("mouseout", function() {
+                mouse_in = false;
+            });
+            window.addEventListener("mouseup", function() {
+                if (!mouse_in) {
+                    formCombo.remove();
+                    cb(null)
+                }
+            });
+            let inputCombo = this.inputer;
+            arrItems.forEach((item) => {
+                let list = document.createElement("div");
+                list.className = "items";
+                list.innerHTML = item;
+                bodyCombo.appendChild(list);
+                list.addEventListener("click", function() {
+                    inputCombo.value = item;
+                    cb(inputCombo.value);
+                    formCombo.remove();
+                });
+            });
+
+            searchInput.addEventListener("keypress", function(e) {
+                SFR(this).delay(100, (dom) => {
+                    bodyCombo.innerHTML = "";
+                    var tangkap = [],
+                        incar = dom[0].value.toUpperCase(),
+                        buang = [];
+                    arrItems.forEach((item) => {
+                        if (item.toUpperCase().indexOf(incar) != -1) {
+                            if (!in_array_str(tangkap, item)) {
+                                tangkap.push(item);
+                            }
+                        } else {
+                            if (!in_array_str(buang, item)) {
+                                buang.push(item);
+                            }
+                        }
+                    });
+                    var newList = [...tangkap, ...buang];
+                    newList.forEach((item) => {
+                        var list = document.createElement("div");
+                        list.className = "items";
+                        list.innerHTML = item;
+                        bodyCombo.appendChild(list);
+                        list.addEventListener("click", function() {
+                            inputCombo.value = item;
+                            cb(inputCombo.value);
+                            formCombo.remove();
+                        });
+                    });
+                    if (e.key == "Enter") {
+                        inputCombo.value = newList[0];
+                        cb(inputCombo.value);
+                        formCombo.remove();
+                    }
+                });
+            });
+            searchInput.addEventListener("textInput", function(e) {
+                SFR(this).delay(100, (dom) => {
+                    bodyCombo.innerHTML = "";
+                    var tangkap = [],
+                        incar = dom[0].value.toUpperCase(),
+                        buang = [];
+                    arrItems.forEach((item) => {
+                        if (item.toUpperCase().indexOf(incar) != -1) {
+                            if (!in_array_str(tangkap, item)) {
+                                tangkap.push(item);
+                            }
+                        } else {
+                            if (!in_array_str(buang, item)) {
+                                buang.push(item);
+                            }
+                        }
+                    });
+                    var newList = [...tangkap, ...buang];
+                    newList.forEach((item) => {
+                        var list = document.createElement("div");
+                        list.className = "items";
+                        list.innerHTML = item;
+                        bodyCombo.appendChild(list);
+                        list.addEventListener("click", function() {
+                            inputCombo.value = item;
+                            cb(inputCombo.value);
+                            formCombo.remove();
+                        });
+                    });
+                    if (e.key == "Enter") {
+                        inputCombo.value = newList[0];
+                        cb(inputCombo.value);
+                        formCombo.remove();
+                    }
+                });
+            });
+            searchInput.focus();
+        }
+    }
+    buildComboKhusus(cb) {
+        if (this.type == "combo") {
+            cb = cb || function() {};
+            let arrItems = this.item;
+            let formCombo = document.createElement("div");
+            formCombo.className = "formCombo z-depth-2";
+
+            let headerCombo = document.createElement("div");
+            headerCombo.className = "headerCombo";
+            formCombo.appendChild(headerCombo);
+
+            let bodyCombo = document.createElement("div");
+            bodyCombo.className = "bodyCombo";
+            formCombo.appendChild(bodyCombo);
+
+            let searchInput = document.createElement("input");
+            searchInput.className = "form-control searchCombo";
+            searchInput.setAttribute("placeholder", "cari...");
+
+            let iconSearch = document.createElement("div");
+            iconSearch.className = "iconinput";
+            iconSearch.innerHTML = `<svg class="svg-icon" style="width: 1em;height: 1em;vertical-align: middle;fill: currentColor;overflow: hidden;" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path d="M192 480a256 256 0 1 1 512 0 256 256 0 0 1-512 0m631.776 362.496l-143.2-143.168A318.464 318.464 0 0 0 768 480c0-176.736-143.264-320-320-320S128 303.264 128 480s143.264 320 320 320a318.016 318.016 0 0 0 184.16-58.592l146.336 146.368c12.512 12.48 32.768 12.48 45.28 0 12.48-12.512 12.48-32.768 0-45.28"  /></svg>`;
+            headerCombo.appendChild(searchInput);
+            headerCombo.appendChild(iconSearch);
+            SFR(this.formgroup).addChild(formCombo);
+            formCombo.style.width = this.inputer.clientWidth + "px";
+            formCombo.style.marginTop = -this.inputer.clientHeight + "px";
+            let mouse_in = false;
+            formCombo.addEventListener("mouseover", function() {
+                mouse_in = true;
+            });
+            formCombo.addEventListener("mouseout", function() {
+                mouse_in = false;
+            });
+            window.addEventListener("mouseup", function() {
+                if (!mouse_in) {
+                    formCombo.remove();
+                    cb(null)
+                }
+            });
+            let inputCombo = this.inputer;
+            arrItems.forEach((item, index) => {
+                let list = document.createElement("div");
+                list.className = "items";
+                SFR(list).setAttr('numbers', index);
+                list.innerHTML = item;
+                bodyCombo.appendChild(list);
+                list.addEventListener("click", function() {
+                    inputCombo.value = item;
+                    cb(inputCombo.value, index);
+                    formCombo.remove();
+                });
+            });
+
+            searchInput.addEventListener("keypress", function(e) {
+                SFR(this).delay(100, (dom) => {
+                    bodyCombo.innerHTML = "";
+                    var tangkap = [],
+                        incar = dom[0].value.toUpperCase(),
+                        buang = [];
+                    arrItems.forEach((item) => {
+                        if (item.toUpperCase().indexOf(incar) != -1) {
+                            if (!in_array_str(tangkap, item)) {
+                                tangkap.push(item);
+                            }
+                        } else {
+                            if (!in_array_str(buang, item)) {
+                                buang.push(item);
+                            }
+                        }
+                    });
+                    var newList = [...tangkap, ...buang];
+                    newList.forEach((item, index) => {
+                        var list = document.createElement("div");
+                        list.className = "items";
+                        SFR(list).setAttr('numbers', index);
+                        list.innerHTML = item;
+                        bodyCombo.appendChild(list);
+                        list.addEventListener("click", function() {
+                            inputCombo.value = item;
+                            cb(inputCombo.value, index);
+                            formCombo.remove();
+                        });
+                    });
+                    if (e.key == "Enter") {
+                        inputCombo.value = newList[0];
+                        cb(inputCombo.value, arrItems.indexOf(newList[0]));
+                        formCombo.remove();
+                    }
+                });
+            });
+            searchInput.addEventListener("textInput", function(e) {
+                SFR(this).delay(100, (dom) => {
+                    bodyCombo.innerHTML = "";
+                    var tangkap = [],
+                        incar = dom[0].value.toUpperCase(),
+                        buang = [];
+                    arrItems.forEach((item) => {
+                        if (item.toUpperCase().indexOf(incar) != -1) {
+                            if (!in_array_str(tangkap, item)) {
+                                tangkap.push(item);
+                            }
+                        } else {
+                            if (!in_array_str(buang, item)) {
+                                buang.push(item);
+                            }
+                        }
+                    });
+                    var newList = [...tangkap, ...buang];
+                    newList.forEach((item, index) => {
+                        var list = document.createElement("div");
+                        list.className = "items";
+                        SFR(list).setAttr('numbers', index);
+                        list.innerHTML = item;
+                        bodyCombo.appendChild(list);
+                        list.addEventListener("click", function() {
+                            inputCombo.value = item;
+                            cb(inputCombo.value, index);
+                            formCombo.remove();
+                        });
+                    });
+                    if (e.key == "Enter") {
+                        inputCombo.value = newList[0];
+                        cb(inputCombo.value, arrItems.indexOf(newList[0]));
+                        formCombo.remove();
+                    }
+                });
+            });
+            searchInput.focus();
+        }
+    }
+    getInputer() {
+        return SFR(this.inputer);
+    }
+    getValue() {
+        return this.inputer.value
+            .replace(/["']/g, "de34ed")
+            .replace(/(\r\n|\n|\r)/gm, "")
+            .replace(/\\/g, "");
+    }
+    getItem() {
+        return this.item;
+    }
+    setValue(value) {
+        this.inputer.value = value;
+    }
+    addItem(item) {
+        this.item.push(item);
+    }
+    removeItem(index) {
+        this.item.splice(index, 1);
+    }
+    replaceItem(items) {
+        this.item = items;
+    }
+}
+
+class CreateUploader {
+    constructor(container, label, srcfile) {
+        this.container = container;
+        this.label = label;
+        this.srcfile = srcfile;
+        this.inputer;
+        this.img;
+    }
+    append() {
+        let formgroup = document.createElement('div');
+        formgroup.className = 'form-group';
+        formgroup.id = this.label.toLowerCase().split('/').join('').split(' ').join('').split('@').join('').split('.').join('');;
+        let labeldisp = document.createElement('label');
+        labeldisp.className = 'form-label';
+        labeldisp.innerHTML = this.label;
+        SFR(formgroup).addChild(labeldisp);
+
+        let uploadcontainer = document.createElement('div');
+        uploadcontainer.className = 'uploadcontainer text-center z-depth-0';
+        SFR(formgroup).addChild(uploadcontainer);
+
+
+
+        let svgicons = document.createElement('div');
+        svgicons.className = 'svgicons';
+        svgicons.innerHTML = `<svg class="svg-icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M964.44948 455.72a223.36 223.36 0 0 0-116.44-66.59A336.09 336.09 0 0 0 202.59948 269.2a333.4 333.4 0 0 0-26.25 119.93A224 224 0 0 0 224.17948 832h32a32 32 0 0 0 0-64h-32c-88.22 0-160-71.78-160-160a160 160 0 0 1 147-159.47 32 32 0 0 0 29.4-33.62c-0.27-5.06-0.41-10.08-0.41-14.9a272 272 0 0 1 544 0c0 4.83-0.14 9.84-0.41 14.9A32 32 0 0 0 813.17948 448.53 160 160 0 0 1 960.17948 608c0 88.22-71.78 160-160 160h-32a32 32 0 0 0 0 64h32a224 224 0 0 0 164.27-376.28z"  />
+                                <path d="M534.81948 553.39q-0.57-0.57-1.17-1.11l-0.5-0.43-0.69-0.59-0.71-0.56-0.51-0.39-0.82-0.58-0.45-0.31-0.87-0.56-0.45-0.28-0.88-0.5-0.49-0.27-0.85-0.43-0.56-0.28-0.79-0.36-0.66-0.29-0.72-0.28-0.76-0.29-0.64-0.22-0.86-0.28-0.58-0.16-0.94-0.25-0.56-0.13-1-0.21-0.59-0.1-0.95-0.16-0.68-0.09-0.86-0.1-0.93-0.07h-0.63q-1.59-0.08-3.19 0h-0.63l-0.92 0.07-0.86 0.1-0.68 0.09-1 0.16-0.58 0.1-1 0.21-0.55 0.13-0.94 0.25-0.57 0.16-0.87 0.28-0.64 0.21-0.77 0.29-0.71 0.28-0.67 0.29-0.78 0.35-0.57 0.28-0.84 0.43-0.49 0.27-0.87 0.5-0.45 0.28-0.87 0.56-0.45 0.31-0.82 0.59-0.5 0.39-0.72 0.57-0.66 0.57-0.52 0.45q-0.59 0.54-1.16 1.1l-160 160a32 32 0 0 0 45.25 45.25L480.17948 653.25V928a32 32 0 0 0 64 0V653.25l105.37 105.38a32 32 0 0 0 45.25-45.25z"  />
+                            </svg>
+                            <h3>Drag & Drop or Browse your file here</h3>`;
+        SFR(uploadcontainer).addChild(svgicons);
+
+        let inputfile = document.createElement('input');
+        inputfile.type = 'file';
+        inputfile.className = 'fileinput';
+        SFR(uploadcontainer).addChild(inputfile);
+
+        let imgdisp = document.createElement('img');
+        imgdisp.className = 'imgdisplay';
+        if (this.srcfile != '' && this.srcfile != null) {
+            imgdisp.src = this.srcfile;
+        }
+        SFR(uploadcontainer).addChild(imgdisp);
+
+        this.container.addChild(formgroup);
+        this.inputer = inputfile;
+        this.img = imgdisp;
+    }
+    getInputer() {
+        return SFR(this.inputer);
+    }
+    setImage(base64) {
+        this.img.src = base64;
+    }
+    getFile() {
+        return this.img.src;
+    }
+
+}
+class CreateButton {
+    constructor(container, label, buttontype) {
+        this.container = container;
+        this.label = label;
+        this.buttontype = buttontype;
+        this.button;
+    }
+    append() {
+        let button = document.createElement('button');
+        button.className = 'btn';
+        button.classList.add(this.buttontype);
+        button.innerHTML = this.label;
+        this.container.addChild(button);
+        this.button = button;
+    }
+
+    getButton() {
+        return SFR(this.button);
+    }
+}
+
+
+function resizeBase64Image(baseimg, max_size, cb) {
+    var cb = cb || function() {};
+    var img = new Image();
+    img.src = baseimg;
+    img.onload = function() {
+        var canvas = document.createElement('canvas');
+        var width = this.width,
+            height = this.height;
+        if (width > height) {
+            if (width > max_size) {
+                height *= max_size / width;
+                width = max_size;
+            }
+        } else {
+            if (height > max_size) {
+                width *= max_size / height;
+                height = max_size;
+            }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(this, 0, 0, width, height);
+        var dataURL = canvas.toDataURL();
+        cb(dataURL);
+    }
+}
+
+function preventWarningCode(file, cb) {
+    let prevent = ['<HTML', '<SCRIPT', '<STYLE', '<?PHP', 'CLICK', 'ISSET', '$_POST', '$_GET', '$_REQUEST', '$_SERVER', 'MOVE', 'DELETE', 'FUNCTION', 'UPLOAD', 'REQUIRE', 'MYSQL', 'FETCH', 'ARRAY', 'ASSOC', 'ECHO', 'PRINT', 'DECODE', 'ENCODE', 'HEADER'];
+    cb = cb || function() {};
+    const reader = new FileReader();
+    reader.onload = () => {
+        var palang = true;
+        prevent.forEach((item) => {
+            if (reader.result.toString().toUpperCase().indexOf(item) != -1) {
+                palang = false;
+            }
+        });
+        const pembaca = new FileReader();
+        pembaca.readAsDataURL(file);
+        pembaca.onload = (e) => {
+            cb((file.size > 10000000 ? false : palang), e.target.result);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function readFileAsUrl(file, cb){
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        cb(e.target.result);
+    };
+    reader.readAsDataURL(file);
+}
+
+function in_array(arr, target) {
+    var palang = false;
+    arr.forEach((item, index) => {
+        if (target == item) {
+            palang = true;
+        }
+    });
+    return palang;
+}
+
+function in_array_str(arr, target) {
+    var palang = false;
+    arr.forEach((item, index) => {
+        if (target.toUpperCase() == item.toUpperCase()) {
+            palang = true;
+        }
+    });
+    return palang;
+}
+
+
+function setCookie(name, value, hour) {
+    var expires = "";
+    if (hour) {
+        var date = new Date();
+        date.setTime(date.getTime() + (hour * (24 / 24) * 60 * 60 * 1000));
+        expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "") + expires + "; path=/";
+}
+
+function getCookie(name) {
+    let cookie = checkCookie(name);
+    if (cookie == null) {
+        logout();
+        return null;
+    } else {
+        return cookie;
+    }
+}
+
+function checkCookie(name) {
+    var nameEQ = name + "=";
+    var ca = document.cookie.split(';');
+    for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ')
+            c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) == 0)
+            return c.substring(nameEQ.length, c.length);
+    }
+
+    return null;
+}
+
+function eraseCookie(name) {
+    document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+}
+
+function getData(location, data, cb) {
+    if (data.token != null) {
+        let addr = `${origlink}/assets/vendor/api/${location}.php`;
+        //  let addr = `assets/vendor/api/${location}.php`;
+        SFR.senggol(addr, data, function(response) {
+            let resp = JSON.parse(response);
+            if (resp.response == 'success') {
+                cb(resp);
+            } else {
+                cb(resp);
+                logout();
+            }
+
+        });
+    } else {
+        logout();
+    }
+}
+
+
+
+
+function getfile(location, cb) {
+    let addr = `${assetmedia}/jsonfile/${location}.json`;
+    if(!urlExists(addr)){
+        cb({
+            response:'createfile'
+        });
+    }
+    else{
+        SFR.senggolfile(addr, function(response) {
+            cb(response);
+        });
+    }
+    // if(UrlExists(addr)){
+
+    // }
+    // else{
+    //     SFR.senggolfile(addr, function(response) {
+    //         cb(response);
+    //      });
+    // }
+   
+}
+
+function urlExists(url)
+{
+    var http=new XMLHttpRequest();
+    http.open('HEAD', url, false);
+    http.send();
+    if(http.status == 200){
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+function getcert(folder, location, cb) {
+    let addr = `${assetmedia}/${folder}/${location}.json`;
+    xmlhttp = new XMLHttpRequest();
+    xmlhttp.onreadystatechange = function() {
+        if (xmlhttp.status) {
+            if (xmlhttp.status == 200 && (xmlhttp.readyState == 4)) {
+                var template = JSON.parse(xmlhttp.responseText);
+                cb(template);
+            }
+        }
+    }
+    xmlhttp.open("GET", addr, true);
+    xmlhttp.send();
+}
+
+function setDataProgress(location, data, progress = ()=>{}, success = ()=>{}) {
+    if (data.token != null) {
+        let addr = `${origlink}/assets/vendor/api/${location}.php`;
+        //  let addr =`assets/vendor/api/${location}.php`;
+        SFR.senggolProgress(addr, data, 
+        function(response) {
+            progress(response);
+        }, function(response){
+            let resp = JSON.parse(response);
+            success(resp);
+        });
+    } else {
+        logout();
+    }
+}
+
+
+function showToast(message, status = 'success') {
+    if(status == 'success'){
+        SFR('.bannertoast').css({
+            'background':'#168847'
+        });
+        $('.icontoast').html(`<svg viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M384 689.92L206.08 512l-60.373333 60.373333L384 810.666667l512-512-60.373333-60.373334z"  /></svg>`);
+    }
+    else if(status == 'error'){
+        SFR('.bannertoast').css({
+            'background':'#c03221'
+        });
+        $('.icontoast').html(`<svg  viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path  fill="currentColor" d="M512 928c229.44 0 416-186.56 416-416S741.44 96 512 96 96 282.56 96 512s186.56 416 416 416z m0-896c264.672 0 480 215.36 480 480s-215.328 480-480 480C247.36 992 32 776.64 32 512S247.36 32 512 32z m214.72 265.28c12.512 12.48 12.512 32.96 0 45.44L557.44 512l169.28 169.28c6.08 6.4 9.28 14.4 9.28 22.72 0 8.32-3.2 16.32-9.28 22.72A32.64 32.64 0 0 1 704 736c-8.32 0-16.32-3.2-22.72-9.28L512 557.44l-169.28 169.28A32.64 32.64 0 0 1 320 736c-8.32 0-16.32-3.2-22.72-9.28-12.48-12.48-12.48-32.96 0-45.44L466.56 512l-169.28-169.28c-6.048-6.4-9.28-14.4-9.28-22.72 0-8.32 3.232-16.32 9.28-22.72 12.512-12.48 32.96-12.48 45.44 0L512 466.56l169.28-169.28c12.512-12.48 32.96-12.48 45.44 0z"  /></svg>`);
+    }
+    else if(status == 'warning'){
+        SFR('.bannertoast').css({
+            'background':'#F16A1B'
+        });
+        SFR('.icontoast').html(`<svg width="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path opacity="0.4" d="M22 11.9998C22 17.5238 17.523 21.9998 12 21.9998C6.477 21.9998 2 17.5238 2 11.9998C2 6.47776 6.477 1.99976 12 1.99976C17.523 1.99976 22 6.47776 22 11.9998Z" fill="currentColor"></path>
+                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12.8701 12.6307C12.8701 13.1127 12.4771 13.5057 11.9951 13.5057C11.5131 13.5057 11.1201 13.1127 11.1201 12.6307V8.21069C11.1201 7.72869 11.5131 7.33569 11.9951 7.33569C12.4771 7.33569 12.8701 7.72869 12.8701 8.21069V12.6307ZM11.1251 15.8035C11.1251 15.3215 11.5161 14.9285 11.9951 14.9285C12.4881 14.9285 12.8801 15.3215 12.8801 15.8035C12.8801 16.2855 12.4881 16.6785 12.0051 16.6785C11.5201 16.6785 11.1251 16.2855 11.1251 15.8035Z" fill="currentColor"></path>
+                                </svg>`);
+    }
+    SFR('.bannertoast').children()[1].html(message);
+    if(SFR('.bannertoast')[0].classList.value.indexOf('showup') == -1){
+        SFR('.bannertoast').addClass('showup').children()[1].html(message);
+        setTimeout(() => {
+            SFR('.bannertoast').removeClass('showup');
+            SFR('.bannertoast').addClass('showdown').delay(300, (dom) => {
+                dom.removeClass('showdown');
+            });
+        }, 3000)
+    }
+}
+
+
+function gettoday() {
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+    var yyyy = today.getFullYear();
+    var hour = today.getHours();
+    var minutes = today.getMinutes();
+    var seconds = today.getSeconds();
+    return yyyy + '-' + mm + '-' + dd + ' ' + hour + ':' + minutes + ':' + seconds;
+}
+
+function getJarakWaktu(target, run, satuan) {
+    if (typeof(target) != "undefined" && typeof(run) != "undefined") {
+        var date1 = new Date(target.replace(/-/g, "/"));
+        var date2 = new Date(run.replace(/-/g, "/"));
+        var diff = date2.getTime() - date1.getTime();
+        var msec = diff; // milisecond
+
+        if (satuan == 'Hari') {
+            return Math.ceil(msec / 1000 / 60 / 60 / 24);
+        } else if (satuan == 'Jam') {
+            return Math.ceil(msec / 1000 / 60 / 60);
+        } else if (satuan == 'Menit') {
+            return Math.ceil(msec / 1000 / 60);
+        } else if (satuan == 'Detik') {
+            return Math.ceil(msec / 1000);
+        }
+    } else {
+        return -1000;
+    }
+}
+
+function isNumber(value) 
+{
+   let palang = true,
+       number = ['0','1','2','3','4','5','6','7','8','9'];
+   for(let i = 0; i < value.length ; i++){
+      if(in_array(number,value.charAt(i))){
+      }
+      else{
+        return false;
+      }
+   }
+   return palang;
+}
+
+function beautyDate(tanggal) {
+    tgl = tanggal.split(' ');
+    part = tgl[0].split('-');
+    bulan = [
+        'Januari',
+        'Februari',
+        'Maret',
+        'April',
+        'Mei',
+        'Juni',
+        'Juli',
+        'Agustus',
+        'September',
+        'Oktober',
+        'November',
+        'Desember',
+    ];
+    return part[2] + ' ' + bulan[(parseInt(part[1]) - 1)] + ' ' + part[0] + (tgl[1] == null ? '' : ' ' + tgl[1]);
+}
+
+function getNameDay(tanggal){
+    let days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    let d = new Date(tanggal);
+    let dayName = days[d.getDay()];
+    return dayName; 
+}
+
+function formatMoney(amount, decimalCount = 0, decimal = ",", thousands = ".") {
+    try {
+        decimalCount = Math.abs(decimalCount);
+        decimalCount = isNaN(decimalCount) ? 2 : decimalCount;
+
+        const negativeSign = amount < 0 ? "-" : "";
+
+        let i = parseInt(amount = Math.abs(Number(amount) || 0).toFixed(decimalCount)).toString();
+        let j = (i.length > 3) ? i.length % 3 : 0;
+
+        return negativeSign + (j ? i.substr(0, j) + thousands : '') + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + thousands) + (decimalCount ? decimal + Math.abs(amount - i).toFixed(decimalCount).slice(2) : "");
+    } catch (e) {
+        console.log(e)
+    }
+}
+
+function showScrollBody() {
+    $('body').css({
+        'overflow-y': 'auto'
+    });
+}
+
+function hideScrollBody() {
+    $('body').css({
+        'overflow-y': 'hidden'
+    });
+}
+
+function getDataMember(kab_kota, cb){
+    
+    let key = base64_encode('jisamsu');
+    if(getStorage(key) != null && getJarakWaktu(gettoday(), JSON.parse(repair(getStorage(key), key)).date, 'Detik') > 0){
+        cb(JSON.parse(repair(getStorage(key), key)));
+    }
+    else{
+        showload();
+        getData('home', {
+            token : getCookie('token'),
+            order:'getDataMember',
+            regional: kab_kota,
+            tdy : gettoday()
+        }, (resp)=>{
+            if(resp.response == 'success'){
+                let storage = {
+                    date : resp.date,
+                    data : resp.data
+                };
+                cb(storage);
+                setStorage(key, shake(JSON.stringify(storage), key));
+                hideload();
+            }
+        })
+    }
+}
+
+function generateId() {
+    return Math.random().toString(36).substring(2) +
+        (new Date()).getTime().toString(36);
+}
+
+function base64_encode(s) {
+    return btoa(unescape(encodeURIComponent(s)));
+}
+
+function base64_decode(s) {
+    return decodeURIComponent(escape(atob(s)));
+}
+
+function getStorage(key){
+    if (typeof(Storage) !== "undefined") {
+       return localStorage.getItem(key);
+    }
+    return [];
+}
+function setStorage(key, value){
+    if (typeof(Storage) !== "undefined") {
+         localStorage.setItem(key, value);
+    }
+}
+function removeStorage(key){
+    if (typeof(Storage) !== "undefined") {
+        localStorage.removeItem(key)
+    }
+}
+
+function filteringWaktu(bidangDaftar, mulai, akhir) {
+    var resp = true;
+    bidangDaftar.forEach(function(item, index) {
+        var selisih1 = getJarakWaktu(item.mulai, mulai, "Detik"),
+            selisih2 = getJarakWaktu(item.mulai, akhir, "Detik"),
+            selisih3 = getJarakWaktu(item.akhir, mulai, "Detik"),
+            selisih4 = getJarakWaktu(item.akhir, akhir, "Detik");
+        if (selisih1 >= 0 && selisih2 >= 0 && selisih3 >= 0 && selisih4 >= 0) {
+
+        } else if (selisih1 <= 0 && selisih2 <= 0 && selisih3 <= 0 && selisih4 <= 0) {
+
+        } else {
+            resp = false;
+        }
+    });
+    return resp;
+}
+
+function shake(value, key){
+    return CryptoJSAesJson.encrypt(value, key);
+}
+
+function repair(value, key){
+    return CryptoJSAesJson.decrypt(value, key);
+}
+
+function jabarkan(json) {
+    var disp = ``;
+    if (json.length == 1) {
+        return json[0]
+    } else if (json.length == 2) {
+        return `${json[0]} dan ${json[1]}`;
+    } else {
+        json.forEach((item, index) => {
+            if (index == json.length - 1) {
+                disp += item;
+            } else if (index == json.length - 2) {
+                disp += `${item} dan `;
+            } else
+                disp += `${item}, `;
+        });
+        return disp;
+    }
+}
+
+function debounce(cb, delay = 1000) {
+    let timeout;
+    return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            cb(...args);
+        }, delay)
+    }
+}
+
+function getNormalizePreviewOnForm(imgsrc, cb) {
+    let img = new Image();
+    img.onload = function(){
+        let height = img.height;
+        let width = img.width;
+
+        let badan = SFR('.overlayForm');
+        let lebarLayar = badan.width(),
+            tinggiLayar = badan.height(),
+            tinggiPrev, lebarPrev;
+
+        
+        if(height > width){
+            // gambar portrait
+            if(lebarLayar < 700){
+                // indikasi handphone
+                lebarPrev = lebarLayar-10;
+                tinggiPrev = lebarPrev * (height/width);
+
+                if(tinggiPrev >= (tinggiLayar-200)){
+                    tinggiPrev = tinggiLayar - 230;
+                    lebarPrev = tinggiPrev * (width/height);
+                    if(lebarPrev > lebarLayar){
+                        lebarPrev = lebarLayar - 10
+                    }
+                }
+                console.log('hp port');
+
+            }
+            else{
+                // indikasi laptop
+                tinggiPrev = tinggiLayar *2 / 3;
+                lebarPrev = tinggiPrev * (width/height);
+                if(lebarPrev >= (lebarLayar-200)){
+                    lebarPrev = lebarLayar - 230;
+                    tinggiPrev = lebarPrev * (height/width);
+
+                    if(tinggiPrev > tinggiLayar){
+                        tinggiPrev = tinggiLayar - 10
+                    }
+                }
+                console.log('pc port');
+            }
+        }
+        else{
+            // gambar lanscape
+            if(lebarLayar < 700){
+                // indikasi handphone
+                lebarPrev = lebarLayar -10;
+                tinggiPrev = lebarPrev * (height/width);
+                console.log('hp lans');
+
+                if(tinggiPrev >= (tinggiLayar-200)){
+                    tinggiPrev = tinggiLayar - 230;
+                    lebarPrev = tinggiPrev * (width/height);
+
+                    if(lebarPrev > lebarLayar){
+                        lebarPrev = lebarLayar - 10
+                    }
+                }
+            }
+            else{
+                // indikasi laptop
+                lebarPrev = lebarLayar* 2/3;
+                tinggiPrev = lebarPrev * (height/width);
+
+                if(tinggiPrev >= (tinggiLayar-200)){
+                    tinggiPrev = tinggiLayar - 230;
+                    lebarPrev = tinggiPrev * (width/height);
+                    if(lebarPrev > lebarLayar){
+                        lebarPrev = lebarLayar - 10
+                    }
+                }
+                console.log('pc lans');
+            }
+        }
+
+        cb({
+            width : lebarPrev,
+            height : tinggiPrev
+        })
+        
+    }
+    img.src = imgsrc;    
+}
+
+function getNormalizePreviewInv(imgsrc, cb) {
+    let img = new Image();
+    img.onload = function(){
+        let height = img.height;
+        let width = img.width;
+
+        let lebarLayar = screen.width,
+            tinggiLayar = screen.height,
+            tinggiPrev, lebarPrev;
+
+        
+        if(height > width){
+            // gambar portrait
+            if(lebarLayar < 700){
+                // indikasi handphone
+                lebarPrev = lebarLayar-10;
+                tinggiPrev = lebarPrev * (height/width);
+
+                if(tinggiPrev >= (tinggiLayar-200)){
+                    tinggiPrev = tinggiLayar - 230;
+                    lebarPrev = tinggiPrev * (width/height);
+                    if(lebarPrev > lebarLayar){
+                        lebarPrev = lebarLayar - 10
+                    }
+                }
+                console.log('hp port');
+
+            }
+            else{
+                // indikasi laptop
+                tinggiPrev = tinggiLayar *2 / 3;
+                lebarPrev = tinggiPrev * (width/height);
+                if(lebarPrev >= (lebarLayar-200)){
+                    lebarPrev = lebarLayar - 230;
+                    tinggiPrev = lebarPrev * (height/width);
+
+                    if(tinggiPrev > tinggiLayar){
+                        tinggiPrev = tinggiLayar - 10
+                    }
+                }
+                console.log('pc port');
+            }
+        }
+        else{
+            // gambar lanscape
+            if(lebarLayar < 700){
+                // indikasi handphone
+                lebarPrev = lebarLayar -10;
+                tinggiPrev = lebarPrev * (height/width);
+
+                if(tinggiPrev >= (tinggiLayar-200)){
+                    tinggiPrev = tinggiLayar - 230;
+                    lebarPrev = tinggiPrev * (width/height);
+
+                    if(lebarPrev > lebarLayar){
+                        lebarPrev = lebarLayar - 10
+                    }
+                }
+                console.log('hp lans');
+            }
+            else{
+                // indikasi laptop
+                lebarPrev = lebarLayar/2;
+                tinggiPrev = lebarPrev * (height/width);
+                console.log('pc lans');
+
+                if(tinggiPrev >= (tinggiLayar-200)){
+                    tinggiPrev = tinggiLayar - 230;
+                    lebarPrev = tinggiPrev * (width/height);
+
+                    if(lebarPrev > lebarLayar){
+                        lebarPrev = lebarLayar - 10
+                    }
+                }
+            }
+        }
+
+        cb({
+            width : lebarPrev,
+            height : tinggiPrev
+        })
+        
+    }
+    img.src = imgsrc;    
+}
+
+
+function pureItAsId(data){
+    return data.toLowerCase().split('/').join('')
+    .split(' ').join('')
+    .split('@').join('')
+    .split('.').join('')
+    .split('(').join('')
+    .split(')').join('')
+    .split(',').join('')
+    .split('=').join('')
+    .split('*').join('')
+    .split('&').join('')
+    .split('%').join('')
+    .split('$').join('')
+    .split('#').join('')
+    .split('{').join('')
+    .split('}').join('')
+    .split('[').join('')
+    .split(']').join('')
+    .split('!').join('');
+}
+function filterAin(data){
+    return data.split('de34ed').join("'").split('DE34ED').join("'");
+}

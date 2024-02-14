@@ -1,0 +1,85 @@
+var btnicons = SFR(".bottomNav").children(),
+  btnNav = SFR(".bottomNav");
+function setButtonIcon(label) {
+  for (let i = 1; i < btnicons.length; i++) {
+    btnicons[i].removeClass("focus");
+  }
+  switch (label) {
+    case "Home":
+      btnicons[1].addClass("focus");
+      setTimeout(() => {
+        btnicons[0].children()[0].html(label);
+        btnicons[0].css({
+          left:
+            btnicons[1].offset().left -
+            btnNav.offset().left +
+            parseInt(window.getComputedStyle(btnicons[1][0])["margin-left"]) /
+              2 +
+            "px",
+        });
+      }, 300);
+      dispHome();
+      break;
+    case "Jadwal":
+      btnicons[2].addClass("focus");
+      setTimeout(() => {
+        btnicons[0].children()[0].html(label);
+        btnicons[0].css({
+          left:
+            btnicons[2].offset().left -
+            btnNav.offset().left +
+            parseInt(window.getComputedStyle(btnicons[1][0])["margin-left"]) /
+              2 +
+            "px",
+        });
+      }, 300);
+      dispJadwal();
+      break;
+    case "Riwayat":
+      btnicons[3].addClass("focus");
+      setTimeout(() => {
+        btnicons[0].children()[0].html(label);
+        btnicons[0].css({
+          left:
+            btnicons[3].offset().left -
+            btnNav.offset().left +
+            parseInt(window.getComputedStyle(btnicons[1][0])["margin-left"]) /
+              2 +
+            "px",
+        });
+      }, 300);
+      dispRiwayat();
+      break;
+    case "Transaksi":
+      btnicons[4].addClass("focus");
+      setTimeout(() => {
+        btnicons[0].children()[0].html(label);
+        btnicons[0].css({
+          left:
+            btnicons[4].offset().left -
+            btnNav.offset().left +
+            parseInt(window.getComputedStyle(btnicons[1][0])["margin-left"]) /
+              2 +
+            "px",
+        });
+      }, 300);
+      dispTransaction();
+      break;
+  }
+}
+
+btnicons[1].on("click", () => {
+  setButtonIcon("Home");
+});
+
+btnicons[2].on("click", () => {
+  setButtonIcon("Jadwal");
+});
+
+btnicons[3].on("click", () => {
+  setButtonIcon("Riwayat");
+});
+
+btnicons[4].on("click", () => {
+  setButtonIcon("Transaksi");
+});

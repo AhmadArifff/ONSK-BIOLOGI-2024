@@ -1,0 +1,1016 @@
+var body = SFR("body");
+var bannerFoto = SFR(".fotoProfle");
+var upl = SFR(".formFoto").children();
+var btneditprofile = SFR(".statuspeserta").children()[1];
+var dataProvinsi = [];
+bannerFoto.on("click", function () {
+  FchangeP();
+  hideScrollBody();
+});
+
+btneditprofile.on("click", function () {
+  FdataP();
+});
+
+SFR(".formdataprofle .posback").on("click", function () {
+  FchangeP();
+  setTimeout(() => {
+    if (profiles.sekolah == "") {
+       FdataP();
+    }
+  }, 1000);
+});
+
+SFR(".formcngPassword .posback").on("click", function () {
+  showScrollBody();
+  SFR(".formFoto")
+    .css({
+      left: "50%",
+      top: bannerFoto.offset().top - window.pageYOffset + "px",
+      width: bannerFoto.width() + "px",
+      height: bannerFoto.height() + "px",
+      "margin-left": -(bannerFoto.width() / 2) + "px",
+      "margin-top": "0px",
+    })
+    .delay(500, (dom) => {
+      SFR(".overlayProfile").hide();
+    });
+  upl[1].hide();
+  upl[2].hide();
+
+  setTimeout(() => {
+    if (profiles.sekolah == "") {
+      showToast("Isi data profile anda terlebih dahulu", 'error');
+      bannerFoto.click();
+      setTimeout(() => {
+        FdataP();
+      }, 1000);
+    }
+    else if(profiles.jenjang == 'undefined'){
+      bannerFoto.click();
+      setTimeout(() => {
+          FdataP();
+          SFR('.formdataprofle .formbody').delay(500, dom=>{
+            dom.animateScrollTo(SFR('#jenjang'), 300)
+          });
+      }, 1000);
+      showToast('Jenjang anda undefined. Mohon diperbaiki', 'warning');
+    }
+  }, 1000);
+});
+
+SFR(".alertmessage .posback").on("click", function () {
+
+    let formdp = parseInt(window.getComputedStyle(SFR('.formdataprofle')[0])["left"]);
+    let formcp = parseInt(window.getComputedStyle(SFR('.formcngPassword')[0])["left"]);
+    SFR(".formProfile").css({
+        height: getTypeDisplay() == "laptop" ? "600px" : "100%",
+    });
+    SFR(".alertmessage").css({
+        left: SFR(".formProfile").width() + "px",
+    });
+    SFR((formdp < 0 &&  formcp < 0? '.formdataprofle': '.formcngPassword')).css({
+        left: "0",
+    }).delay(300, ()=>{
+        SFR(".formFoto, .namapeserta, .statuspeserta").css({
+          'display':'flex'
+        });
+    });
+});
+
+function FchangeP() {
+  // SFR(".maindisp").html("");
+  SFR(".overlayProfile").css({ display: "flex" });
+  let childform = SFR(".formProfile").children();
+  SFR(".formProfile").css({
+    height: getTypeDisplay() == "laptop" ? "550px" : "100%",
+  });
+  childform[0].css({
+    left: SFR(".formProfile").width() + "px",
+  });
+  childform[2].css({
+    left: SFR(".formProfile").width() + "px",
+  });
+  childform[1].css({
+    left: "0px",
+  });
+
+  childform[1]
+    .children()[1]
+    .children()[0]
+    .css({
+      "margin-top": getTypeDisplay() == "laptop" ? "60px" : "200px",
+    });
+
+  SFR(".namapeserta").delay(300, (dom) => {
+    dom
+      .css({
+        top:
+          SFR(".formProfile").offset().top +
+          65 +
+          20 -
+          window.pageYOffset +
+          "px",
+        "margin-top": getTypeDisplay() == "laptop" ? "0px" : "120px",
+        left:
+          SFR(".formProfile").offset().left +
+          (SFR(".formProfile").width() - 130) / 2 +
+          "px",
+      })
+      .delay(300, (dom) => {
+        dom.css({ display: "block" }).delay(100, (dom) => {
+          let lebarnamap = dom.width(),
+            lebarform = SFR(".formProfile").width(),
+            margkiri = (lebarform - lebarnamap) / 2;
+          let kiri = SFR(".formProfile").offset().left + margkiri;
+          dom.css({
+            left: kiri + "px",
+          });
+        });
+      });
+  });
+
+  SFR(".statuspeserta").delay(300, (dom) => {
+    dom
+      .css({
+        top:
+          SFR(".formProfile").offset().top +
+          65 +
+          40 -
+          window.pageYOffset +
+          "px",
+        "margin-top": getTypeDisplay() == "laptop" ? "0px" : "120px",
+        left:
+          SFR(".formProfile").offset().left +
+          (SFR(".formProfile").width() - 130) / 2 +
+          "px",
+      })
+      .delay(300, (dom) => {
+        dom.css({ display: "flex" }).delay(100, (dom) => {
+          dom.children()[1].show();
+          let lebarnamap = dom.width(),
+            lebarform = SFR(".formProfile").width(),
+            margkiri = (lebarform - lebarnamap) / 2;
+          let kiri = SFR(".formProfile").offset().left + margkiri;
+          dom.css({
+            left: kiri + "px",
+          });
+        });
+      });
+  });
+
+  SFR(".formFoto").delay(300, (dom) => {
+    dom
+      .css({
+        width: "130px",
+        height: "130px",
+        "margin-left": "-65px",
+        "margin-top": "0px",
+        top:
+          SFR(".formcngPassword").offset().top +
+          (getTypeDisplay() == "laptop" ? -65 : 70) -
+          window.pageYOffset +
+          "px",
+        left: "50%",
+      })
+      .addClass("z-depth-3");
+
+    upl[1].css({
+      right: "32px",
+      display: "block",
+    });
+    upl[2].css({
+      right: "32px",
+      display: "flex",
+    });
+  });
+
+
+  SFR(".formcngPassword .formbody .row").html("");
+  SFR('.formcngPassword .formbody .d-flex').html("");
+
+  let oldpass = new CreateInput(SFR(".formcngPassword .formbody .row"), 'password', '', [], 'Password lama');
+  oldpass.append();
+
+  let newpass = new CreateInput(SFR(".formcngPassword .formbody .row"), 'password', '', [], 'Password baru');
+  newpass.append();
+
+  let ulangipass = new CreateInput(SFR(".formcngPassword .formbody .row"), 'password', '', [], 'Ulangi password baru');
+  ulangipass.append();
+
+  SFR('.formcngPassword .formbody .d-flex').html(' <button type="submit" class="btn btn-primary" id="btnsimpanpass">Save</button>');
+
+
+  SFR('#btnsimpanpass').on('click', function(){
+      if(oldpass.getValue() == ''){
+        showToast('Password lama masih kosong', 'error');
+      }
+      else if(newpass.getValue() == ''){
+        showToast('Password baru masih kosong', 'error');
+      }
+      else if(newpass.getValue().length < 7 ){
+        showToast('Password baru kurang dari 7 digit', 'error');
+      }
+      else if(ulangipass.getValue() != newpass.getValue()){
+        showToast('Password yang anda ketikan tidak identik', 'error');
+      }
+      else{
+        SFR(".alertmessage .formfooter").html('');
+        SFR(".formFoto, .namapeserta, .statuspeserta").hide();
+        SFR(".formcngPassword").css({
+            left: -1 * SFR(".formProfile").width() + "px",
+        });
+        
+        SFR(".alertmessage").css({
+            left: "0",
+        });
+        SFR(".alertmessage .formbody").html(`<p>Apakah anda yakin ingin mengganti password dengan yang baru?</p>`);
+        SFR(".formProfile").css({
+            height: "200px"
+        });
+        let buttonyakin = new CreateButton(SFR('.alertmessage .formfooter'), 'Yakin', 'btn-success');
+        buttonyakin.append();
+        buttonyakin.getButton().on('click', function(){
+            showload();
+            getData('profiles', {
+              token : getCookie('token'),
+              order : 'changemypass',
+              ops : oldpass.getValue(),
+              nps : newpass.getValue()
+            }, (resp)=>{
+                if(resp.response == 'success'){
+                   showToast(resp.data.message, resp.data.status);
+                }
+                hideload();
+                SFR(".alertmessage .posback").click();
+            });
+        })
+
+        let buttonbatal = new CreateButton(SFR('.alertmessage .formfooter'), 'Batal', 'btn-danger');
+        buttonbatal.append();
+
+        buttonbatal.getButton().on('click', function(){
+           SFR(".alertmessage .posback").click();
+        })
+      }
+  })
+
+}
+
+function FdataP() {
+  // SFR(".maindisp").html("");
+  SFR(".formdataprofle").css({
+    left: "0",
+  });
+  SFR(".formcngPassword").css({
+    left: -1 * SFR(".formProfile").width() + "px",
+  });
+  upl[1].hide();
+  upl[2].hide();
+  SFR(".formProfile").css({
+    height: getTypeDisplay() == "laptop" ? "600px" : "100%",
+  });
+
+  SFR(".formFoto").delay(300, (dom) => {
+    dom
+      .css({
+        width: "40px",
+        height: "40px",
+        "margin-left": "7.5px",
+        "margin-top": "7.5px",
+        left: SFR(".formdataprofle .posfoto").offset().left + "px",
+        top:
+          SFR(".formdataprofle .posfoto").offset().top -
+          window.pageYOffset +
+          "px",
+      })
+      .removeClass("z-depth-3");
+    SFR(".namapeserta").css({
+      left: SFR(".formdataprofle .judul").offset().left + 5 + "px",
+      top:
+        SFR(".formdataprofle .judul").offset().top +
+        14 -
+        window.pageYOffset +
+        "px",
+      "margin-top": "0px",
+    });
+    SFR(".statuspeserta")
+      .css({
+        left: SFR(".formdataprofle .judul").offset().left + 5 + "px",
+        top:
+          SFR(".formdataprofle .judul").offset().top +
+          30 -
+          window.pageYOffset +
+          "px",
+        "margin-top": "0px",
+      })
+      .children()[1]
+      .hide();
+  });
+  SFR(".formdataprofle .formbody").html("");
+  SFR('.formdataprofle .formfooter').html('');
+
+  let emails = new CreateInput(
+    SFR(".formdataprofle .formbody"),
+    "text",
+    profiles.email,
+    [],
+    "Email"
+  );
+
+
+  emails.append();
+  emails.getInputer()[0].id = "email";
+  emails.getInputer()[0].readOnly = true;
+
+  let namal = new CreateInput(
+    SFR(".formdataprofle .formbody"),
+    "text",
+    filterAin(profiles.nama),
+    [],
+    "Nama Lengkap"
+  );
+  namal.append();
+  namal.getInputer()[0].id = "namalengkap";
+
+  let kontak = new CreateInput(
+    SFR(".formdataprofle .formbody"),
+    "number",
+    profiles.kontak,
+    [],
+    "No Whatsap"
+  );
+  kontak.append();
+  kontak.getInputer()[0].id = "nowhatsap";
+
+  let tanggal_lahir = new CreateInput(
+    SFR(".formdataprofle .formbody"),
+    "date",
+    profiles.tanggal_lahir,
+    [],
+    "Tanggal Lahir"
+  );
+  tanggal_lahir.append();
+
+  let agama = new CreateInput(
+    SFR(".formdataprofle .formbody"),
+    "combo",
+    profiles.agama,
+    ["Islam", "Protestan", "Katholik", "Hindu", "Budha", "Konghucu", "Lainnya"],
+    "Agama"
+  );
+  agama.append();
+
+  agama.getInputer().on("click", function () {
+    agama.buildCombo((value) => {
+    });
+  });
+
+  let gender = new CreateInput(
+    SFR(".formdataprofle .formbody"),
+    "combo",
+    profiles.gender,
+    ["Laki - Laki", "Perempuan"],
+    "Jenis Kelamin"
+  );
+  gender.append();
+
+  gender.getInputer().on("click", function () {
+    gender.buildCombo((value) => {
+    });
+  });
+
+  let arrSubjek =
+    profiles.subjek == "Siswa"
+      ? ["Mahasiswa", "Siswa"]
+      : profiles.subjek == "Mahasiswa"
+      ? ["Mahasiswa", "Guru"]
+      : ["Guru"];
+  let sebagai = new CreateInput(
+    SFR(".formdataprofle .formbody"),
+    "combo",
+    profiles.subjek,
+    arrSubjek,
+    "Akun sebagai"
+  );
+  sebagai.append();
+
+  sebagai.getInputer().on("click", function () {
+    sebagai.buildCombo((value) => {
+      if (value != null) {
+            jenjang.setValue("");
+            prov.setValue("");
+            kab.setValue("");
+            kec.setValue("");
+            sekolah.setValue("");
+            if (value == "Mahasiswa") {
+                jenjang.replaceItem(["Perguruan Tinggi"]);
+                jenjang.setValue('Perguruan Tinggi');
+            } else {
+            jenjang.replaceItem(["SD", "SMP", "SMA"]);
+            }
+      }
+    });
+  });
+
+  let jenjang = new CreateInput(
+    SFR(".formdataprofle .formbody"),
+    "combo",
+    profiles.jenjang,
+    [],
+    "Jenjang"
+  );
+  jenjang.append();
+
+  jenjang.getInputer().on("click", function () {
+    jenjang.buildCombo((value) => {
+      if (value != null) {
+        prov.setValue("");
+        kab.setValue("");
+        kec.setValue("");
+        sekolah.setValue("");
+      }
+    });
+  });
+
+  let prov = new CreateInput(
+    SFR(".formdataprofle .formbody"),
+    "combo",
+    profiles.provinsi,
+    dataProvinsi,
+    "Provinsi sekolah"
+  );
+  prov.append();
+
+  prov.getInputer().on("click", function () {
+    getProv((dtprov) => {
+      prov.replaceItem(dtprov);
+      prov.buildCombo((value) => {
+        if (value != null) {
+          showload();
+          getData(
+            "profiles",
+            {
+              token: getCookie("token"),
+              order: "getkab",
+              prov: value,
+            },
+            (resp) => {
+              if (resp.response == "success") {
+                kab.replaceItem(resp.data);
+                kec.replaceItem([]);
+                sekolah.replaceItem([]);
+                kab.setValue("");
+                kec.setValue("");
+                sekolah.setValue("");
+              }
+              hideload();
+            }
+          );
+        }
+      });
+    });
+  });
+
+  let kab = new CreateInput(
+    SFR(".formdataprofle .formbody"),
+    "combo",
+    profiles.kab_kota,
+    [],
+    "Kab / Kota sekolah"
+  );
+  kab.append();
+
+  kab.getInputer().on("click", function () {
+    kab.buildCombo((value) => {
+      if (value != null) {
+        showload();
+        getData(
+          "profiles",
+          {
+            token: getCookie("token"),
+            order: "getkec",
+            prov: prov.getValue(),
+            kab: value,
+          },
+          (resp) => {
+            if (resp.response == "success") {
+              kec.replaceItem(resp.data);
+              sekolah.replaceItem([]);
+              kec.setValue("");
+              sekolah.setValue("");
+            }
+            hideload();
+          }
+        );
+      }
+    });
+  });
+
+  let kec = new CreateInput(
+    SFR(".formdataprofle .formbody"),
+    "combo",
+    profiles.kecamatan,
+    [],
+    "Kecamatan sekolah"
+  );
+  kec.append();
+
+  kec.getInputer().on("click", function () {
+    kec.buildCombo((value) => {
+      if (value != null) {
+        showload();
+        getData(
+          "profiles",
+          {
+            token: getCookie("token"),
+            order: "getsekolah",
+            prov: prov.getValue(),
+            kab: kab.getValue(),
+            kec: value,
+            jenjang: jenjang.getValue(),
+          },
+          (resp) => {
+            if (resp.response == "success") {
+              sekolah.replaceItem(resp.data);
+              sekolah.addItem("lainnya");
+              sekolah.setValue("");
+            }
+            hideload();
+          }
+        );
+      }
+    });
+  });
+
+  let sekolah = new CreateInput(
+    SFR(".formdataprofle .formbody"),
+    "combo",
+    filterAin(profiles.sekolah),
+    [],
+    "Nama sekolah"
+  );
+  sekolah.append();
+
+  sekolah.getInputer().on("click", function () {
+    sekolah.buildCombo((value) => {
+      if (value != null) {
+        if (value == "lainnya") {
+          lainnya.getInputer().parent().show();
+        } else {
+          lainnya.getInputer().parent().hide();
+        }
+      }
+    });
+  });
+
+  let lainnya = new CreateInput(
+    SFR(".formdataprofle .formbody"),
+    "text",
+    "",
+    [],
+    "Ketik nama sekolah"
+  );
+  lainnya.append();
+
+  lainnya.getInputer().parent().hide();
+
+
+
+  let button = new CreateButton(SFR('.formdataprofle .formfooter'), 'Simpan', 'btn-success');
+  button.append();
+
+  button.getButton().on('click', function() {
+       let profElem = SFR('.formdataprofle .formbody').children(),
+           palang = true,
+           message = '',
+           dataProfiles = {},
+           posid = '';
+
+       profElem.forEach((element, index) => {
+            if(index > 0 && index < 12){
+                if(index == 2){
+                    if(element.children()[1].value().length > 13){
+                        if(palang){
+                            message = 'Digit nomor kontak melebihi batas maksimum';
+                            posid = element.children()[1][0].placeholder.toLowerCase().split('/').join('').split(' ').join('')
+                        }
+                        palang = false;
+                    }
+                    else if(element.children()[1].value().length < 10){
+                        if(palang){
+                            message = 'Digit nomor kontak masih kurang';
+                            posid = element.children()[1][0].placeholder.toLowerCase().split('/').join('').split(' ').join('')
+                        }
+                        palang = false;
+                    }
+                    else{
+                        if(isNumber(element.children()[1].value())){
+                            dataProfiles[element.children()[1][0].placeholder.toLowerCase().split('/').join('').split(' ').join('')] = element.children()[1].value();
+                        }
+                        else {
+                            if(palang){
+                                message = 'No Whatsap harus berisi number';
+                                posid = element.children()[1][0].placeholder.toLowerCase().split('/').join('').split(' ').join('')
+                            }
+                            palang = false;
+                        }
+                    }
+                }
+                else{
+                    if(element.children()[1].value() == ''){
+                        if(palang){
+                            message = element.children()[1][0].placeholder + ' masih kosong';
+                            posid = element.children()[1][0].placeholder.toLowerCase().split('/').join('').split(' ').join('')
+
+                        }
+                        palang = false;
+                    }
+                    else if(element.children()[1].value() == 'undefined'){
+                      if(palang){
+                          message = element.children()[1][0].placeholder + ' undefined. Mohon perbaiki';
+                          posid = element.children()[1][0].placeholder.toLowerCase().split('/').join('').split(' ').join('')
+                      }
+                      palang = false;
+                    }
+                    else{
+                        dataProfiles[element.children()[1][0].placeholder.toLowerCase().split('/').join('').split(' ').join('')] = element.children()[1].value();
+                    }
+                }
+            }
+            else{
+              if(index >= 12 ){
+                if(window.getComputedStyle(lainnya.getInputer().parent()[0])["display"] == 'none'){
+                   // do nothing
+                }
+                else{
+                   if(element.children()[1].value() == ''){
+                        if(palang){
+                            message = 'ketik nama sekolah anda';
+                            posid = element.children()[1][0].placeholder.toLowerCase().split('/').join('').split(' ').join('')
+                        }
+                        palang = false;
+                   }
+                   else{
+                        dataProfiles[element.children()[1][0].placeholder.toLowerCase().split('/').join('').split(' ').join('')] = element.children()[1].value();
+                   }
+                }
+              }
+            }
+       });
+
+       if(palang){
+            // munculkan form konfirmasi
+            SFR(".alertmessage .formfooter").html('');
+            SFR(".formFoto, .namapeserta, .statuspeserta").hide();
+            SFR(".formdataprofle").css({
+                left: -1 * SFR(".formProfile").width() + "px",
+            });
+            SFR(".alertmessage").css({
+                left: "0",
+            });
+            SFR(".alertmessage .formbody").html(`<p>Apakah anda yakin data profile yang anda isikan sudah benar?</p>`);
+            SFR(".formProfile").css({
+                height: "200px"
+              });
+
+            let buttonyakin = new CreateButton(SFR('.alertmessage .formfooter'), 'Yakin', 'btn-success');
+            buttonyakin.append();
+            dataProfiles['token'] = getCookie('token');
+            dataProfiles['order'] = 'updatemyprofile';
+            buttonyakin.getButton().on('click', function(){
+                showload();
+                getData('profiles', dataProfiles, (resp)=>{
+                    if(resp.response == 'success'){
+                       if(resp.data.status == 'success'){
+                          profiles = resp.data.profiles;
+                          SFR(".namapeserta").html(
+                            profiles.nama.length > 20
+                              ? filterAin(profiles.nama.substr(0, 19))
+                              : filterAin(profiles.nama)
+                          );
+                          SFR(".statuspeserta span").html(
+                            profiles.subjek + " - " + profiles.jenjang
+                          );
+                          SFR('.formFoto img')[0].src =  profiles.face+'?a='+Math.random();
+                          SFR('.fotoProfle img')[0].src =   profiles.face+'?a='+Math.random();
+                       }
+                       if(resp.data.status == 'success'){
+                          SFR(".alertmessage .posback").click().delay(600, dom=>{
+                            SFR(".formdataprofle .posback").click().delay(600, dom=>{
+                                setButtonIcon('Home');
+                            });
+                          });
+                       }
+                       else{
+                          SFR(".alertmessage .posback").click();
+                       }
+                       showToast(resp.data.message, resp.data.status);
+                    }
+                    hideload();
+                });
+            })
+
+            let buttonbatal = new CreateButton(SFR('.alertmessage .formfooter'), 'Batal', 'btn-danger');
+            buttonbatal.append();
+
+            buttonbatal.getButton().on('click', function(){
+                SFR(".alertmessage .posback").click();
+            })
+       }
+       else{
+         showToast(message, 'warning');
+         SFR('.formdataprofle .formbody').animateScrollTo(SFR('#'+posid), 300);
+       }
+
+  })
+}
+
+SFR(".signout").on("click", function () {
+  SFR(".formcngPassword .posback")
+    .click()
+    .delay(300, (dom) => {
+      logout();
+    })
+});
+
+SFR(document).ready(() => {
+  firstTriggerOne();
+});
+
+function getProv(cb = () => {}) {
+  if (dataProvinsi.length > 0) {
+    cb(dataProvinsi);
+  } else {
+    showload();
+    getData(
+      "profiles",
+      {
+        token: getCookie("token"),
+        order: "getprov",
+      },
+      (resp) => {
+        if (resp.response == "success") {
+          dataProvinsi = resp.data;
+          cb(dataProvinsi);
+        }
+        hideload();
+      }
+    );
+  }
+}
+
+function firstTriggerOne() {
+  if (getCookie("token") != "") {
+    if (typeof profiles == "undefined") {
+      getData(
+        "profiles",
+        {
+          token: getCookie("token"),
+          order: "myprofile",
+        },
+        (resp) => {
+          if (resp.response == "success") {
+            profiles = resp.data;
+            setVarianExped(profiles.alamat_pengiriman,0, (resp)=>{});
+            getMyCart();
+            setButtonIcon("Home");
+            SFR(".namapeserta").html(
+              profiles.nama.length > 20
+                ? filterAin(profiles.nama.substr(0, 19))
+                : filterAin(profiles.nama)
+            );
+            SFR(".statuspeserta span").html(
+              profiles.subjek + " - " + profiles.jenjang
+            );
+            SFR('.formFoto img')[0].src =  profiles.face +'?a='+Math.random();
+            SFR('.fotoProfle img')[0].src =   profiles.face +'?a='+Math.random();
+            forceShowProfiles();
+            if(resp.expinv.length>0){
+                expinv(resp.expinv);
+            }
+            else{
+              getDataQuiz(true);
+            }
+          } else {
+            logout();
+          }
+        }
+      );
+    } else {
+      SFR(".namapeserta").html(
+        profiles.nama.length > 20 ? profiles.nama.substr(0, 19) : profiles.nama
+      );
+      SFR(".statuspeserta span").html(
+        profiles.subjek + " - " + profiles.jenjang
+      );
+      setButtonIcon('Home');
+      forceShowProfiles();
+    }
+  } else {
+    logout();
+  }
+}
+
+var invExpired = [];
+function expinv(dt){
+    invExpired = dt;
+    let beginButton = SFR('.bottomNav').children();
+    kiri = beginButton[4].offset().left;
+    atas = beginButton[4].offset().top - window.pageYOffset;
+    lebar = beginButton[4].width();
+    tinggi = beginButton[4].height();
+
+    SFR(".overlayForm")
+    .css({
+    display: "block",
+    }).delay(10, dom=>{
+        hideScrollBody();
+        SFR(".mainform")
+        .css({
+            display: "block",
+            width: getTypeDisplay() == "laptop" ? "500px" : "100%",
+            height: getTypeDisplay() == "laptop" ? "600px" : "100%",
+            left: getTypeDisplay() == "laptop" ? "50%" : "0",
+            top: getTypeDisplay() == "laptop" ? "50%" : "0",
+            "border-radius": "10px",
+            "margin-left": getTypeDisplay() == "laptop" ? "-250px" : "0",
+            "margin-top": getTypeDisplay() == "laptop" ? "-300px" : "0",
+        }).delay(100, dom =>{
+            dom.children().forEach((item, ind) => {
+                item.children()[1].html("");
+                if (ind > 0) {
+                item.css({
+                    left: dom.width() + "px",
+                });
+                } else {
+                    item.css({
+                        left: "0px",
+                        })
+                        .children()[0]
+                        .children()[1]
+                        .children()[0]
+                        .html('Upload Bukti Transfer')
+                        .parent()
+                        .children()[1]
+                        .html('#'+dt[0].no_transaksi)
+                        .parent().parent().parent().children()[1].html('');
+                      
+                        SFR('.form1 .formbody').html(`
+                        <div class="form-group disclaimers">
+                          <label class="form-label" style="color:blue; font-weight:bold;">
+                           Anda memiliki Invoice yang sudah lewat masa berlaku. Mohon segera upload bukti transfer anda. Abaikan pesan ini jika anda ingin membatalkan pengajuan. Terima kasih.
+                           </label><button type="button" class="btn btn-outline-warning mt-2 btnExpInv">
+                           <svg width="15" height="16" class="me-2" viewBox="0 0 19 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M12.7162 14.2236H5.49622" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                              <path d="M12.7162 10.0371H5.49622" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                              <path d="M8.25131 5.86035H5.49631" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                              <path fill-rule="evenodd" clip-rule="evenodd" d="M12.9086 0.75C12.9086 0.75 5.23161 0.754 5.21961 0.754C2.45961 0.771 0.75061 2.587 0.75061 5.357V14.553C0.75061 17.337 2.47261 19.16 5.25661 19.16C5.25661 19.16 12.9326 19.157 12.9456 19.157C15.7056 19.14 17.4156 17.323 17.4156 14.553V5.357C17.4156 2.573 15.6926 0.75 12.9086 0.75Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                           </svg>#${dt[0].no_transaksi}</button></div>`);
+                    let bukti = new CreateUploader(SFR('.form1 .formbody'), 'Bukti transfer','');
+                    bukti.append();
+
+                    SFR('.btnExpInv').on('click', function(){
+                      openInvoice(dt[0].no_transaksi, dt[0].rek,dt[0].atan, dt[0].amount, dt[0].status, dt[0].tanggal_expired, dt[0].data_order, dt[0].kode_unik, dt[0].lembaga);
+                    })
+
+                    bukti.getInputer().on('change', function(e) {
+                        preventWarningCode(e.target.files[0], (palang, data) => {
+                            if (palang) {
+                                bukti.setImage(data);
+                            } else {
+                                showToast('gambar terindikasi mengandung code mengancam, crop menggunakan ms paint', 'error');
+                                bukti.setImage('');
+                            }
+                        });
+                    });
+
+                    let btnUpload = new CreateButton(SFR('.form1 .formfooter'), 'Upload', 'btn-success');
+                    btnUpload.append();
+                    btnUpload.getButton().on('click', function(){
+                         if(bukti.getFile() == ''){
+                            showToast('Bukti transfer belum diimport', 'error');
+                         }
+                         else{
+                              resizeBase64Image(bukti.getFile(),500, resp=>{
+                                showload();
+                                    getData('transact',{
+                                        token : getCookie('token'),
+                                        order : 'bukti',
+                                        pos: dt[0].pos,
+                                        file: resp
+                                    }, resp=>{
+                                        if(resp.data.status == 'success'){
+                                            SFR(".form1 .posback").click();
+                                            showToast('Bukti Transfer berhasil diupload');
+                                            invExpired.splice(0,1);
+                                        }
+                                        else{
+                                            showToast('Bukti Transfer gagal diupload', 'error');
+                                        }
+                                        hideload();
+                                    }) 
+                              });
+                         }
+                    });
+                    let btnAbai = new CreateButton(SFR('.form1 .formfooter'), 'Abaikan', 'btn-danger');
+                    btnAbai.append();
+
+                    btnAbai.getButton().on('click', function(){
+                      let form = SFR('.mainform').children();
+                          form[0].css({
+                              'left': - SFR('.mainform').width() + 'px',
+                          });
+                          form[1].css({
+                              'left':'0px'
+                          }).children()[1].html(`<p>Mengabaikan pesan ini akan menghapus pengajuan order anda dengan No #${dt[0].no_transaksi}. Apakah anda tetap ingin mengapusnya?</p>`)
+                          .parent().children()[0].children()[1].children()[0].html('Form Konfirmasi')
+                          .parent().children()[1].html(`Message Alert`)
+                          .parent().parent().parent().parent().css({
+                              'height':'200px',
+                              'margin-top':'-100px',
+                              'top': "50%"
+                          }).children()[1].children()[2].html('');
+
+                          
+
+                          let btnYa = new CreateButton(form[1].children()[2], 'Ya', 'btn-danger');
+                          btnYa.append();
+                          btnYa.getButton().on('click', function(){
+                              showload();
+                              getData('transact',{
+                                  order: 'rminv',
+                                  token: getCookie('token'),
+                                  pos: dt[0].pos
+                              }, resp =>{
+                                  hideload();
+                                  if(resp.response == 'success'){
+                                     showToast(resp.data);
+                                     invExpired.splice(0,1);
+                                     SFR(".form1 .posback").click();
+                                     let key = base64_encode('trans');
+                                     getStorage(key)
+                                     if(getStorage(key) != null){
+                                        let dtinv = JSON.parse(repair(getStorage(key), key));
+                                        dtinv.date = '2020-01-01 10:10';
+                                        setStorage(key, shake(JSON.stringify(dtinv), key));
+                                     }
+                                     setButtonIcon("Home");
+                                  }
+                              });
+                          });
+
+                          let btnTidak = new CreateButton(form[1].children()[2], 'Tidak', 'btn-success');
+                          btnTidak.append();
+                          btnTidak.getButton().on('click', function(){
+                              SFR(".form2 .posback").click();
+                          });
+                    })
+                }
+            });
+        })
+    });
+
+  // openInvoice(dt[0].no_transaksi, dt[0].rek,dt[0].atan, dt[0].amount, dt[0].status, dt[0].tanggal_expired, dt[0].data_order, dt[0].kode_unik);
+}
+
+function forceShowProfiles() {
+  if (profiles.sekolah == "") {
+    bannerFoto.click();
+    setTimeout(() => {
+      FdataP();
+    }, 1000);
+  }
+}
+
+
+SFR('.brws').on('change', function(e){
+    preventWarningCode(e.target.files[0], (palang, baseimage)=>{
+        if(palang){
+            resizeBase64Image(baseimage, 500, (image)=>{
+                  let progressMax = 470;
+                  setDataProgress('profiles', {
+                    token : getCookie('token'),
+                    order : 'myface',
+                    baseimage : image
+                  }, function(resp){
+                      let progresData  = (resp.total - resp.loaded) / resp.total;
+                      let progresing = (progresData * progressMax);
+                      $('.circleProgress').css({
+                        'stroke-dashoffset': progresing
+                      });
+                  }, function(resp){
+                    $('.circleProgress').css({
+                      'stroke-dashoffset': progressMax
+                    });
+                    profiles.face = resp.data.face;
+                    SFR('.formFoto img')[0].src =  resp.data.message + '?a='+Math.random();
+                    SFR('.fotoProfle img')[0].src =  resp.data.message+ '?a='+Math.random();
+                  })
+            })
+        }
+        else{
+          showToast("gambar mengandung code yang dianggap berbahaya", 'error');
+        }
+    });
+})

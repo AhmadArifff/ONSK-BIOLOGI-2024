@@ -1,0 +1,1404 @@
+var homeData,
+  kiri,
+  atas,
+  lebar,
+  tinggi,
+  memberdata = [],
+  indexEvent,
+  myidkat,
+  myfixreg,
+  mylist,
+  todays = gettoday();
+
+SFR(document).ready(function () {
+  todays = gettoday();
+  let mouse_in = false;
+  SFR(".floatbutton1, .floatbutton2, .containerpanelsrc").on(
+    "mouseover",
+    function () {
+      mouse_in = true;
+    }
+  );
+  SFR(".floatbutton1, .floatbutton2, .containerpanelsrc").on(
+    "mouseout",
+    function () {
+      mouse_in = false;
+    }
+  );
+  window.addEventListener("mouseup", function () {
+    if (
+      !mouse_in &&
+      window.getComputedStyle(SFR(".mainform")[0])["display"] == "none"
+    ) {
+      if (
+        window.getComputedStyle(SFR(".overlayForm")[0])["display"] == "block" &&
+        window.getComputedStyle(SFR(".containerpanelsrc")[0])["display"] ==
+          "none"
+      ) {
+        SFR(".containerpanelsrc").hide();
+        SFR(".floatbutton1")
+          .children()[1]
+          .hide()
+          .parent()
+          .css({
+            left: kiri + "px",
+            top: atas + "px",
+            width: lebar + "px",
+            height: tinggi + "px",
+            "margin-top": "0",
+            "margin-left": "0",
+            display: "flex",
+          })
+          .delay(100, (dom0) => {
+            SFR(".floatbutton2")
+              .children()[1]
+              .hide()
+              .parent()
+              .css({
+                left: kiri + "px",
+                top: atas + "px",
+                width: lebar + "px",
+                height: tinggi + "px",
+                "margin-top": "0",
+                "margin-left": "0",
+                display: "flex",
+              })
+              .delay(330, (dom1) => {
+                SFR(".overlayForm").css({
+                  display: "none",
+                });
+                dom0.hide();
+                dom1.hide();
+                showScrollBody();
+              });
+          });
+      } else {
+        SFR(".containerpanelsrc").hide();
+      }
+    }
+  });
+
+  SFR(".form1 .formbody").on("click", "#btnregbdg", function () {
+    let indexkat = SFR(this).getAttr("meta");
+    if (in_array(myidkat, indexkat)) {
+      if (!in_array(myfixreg, indexkat)) {
+        let index = myidkat.indexOf(indexkat);
+        if (index !== -1) {
+          myidkat.splice(index, 1);
+        }
+      } else {
+        showToast("Bidang studi ini sudah anda daftar", "error");
+      }
+    } else {
+      let bidangDaftar = convertToBidangDaftar(myidkat, mylist);
+      if (bidangDaftar.length == 0) {
+        if (myidkat.length < homeData.online[indexEvent].max) {
+          myidkat.push(indexkat);
+        } else {
+          showToast(
+            "Maksimum " + homeData.online[indexEvent].max + " Bidang Studi",
+            "error"
+          );
+        }
+      } else {
+        if (
+          filteringWaktu(
+            bidangDaftar,
+            getKeyListReg(indexkat, mylist, "mulai"),
+            getKeyListReg(indexkat, mylist, "akhir")
+          )
+        ) {
+          if (myidkat.length < homeData.online[indexEvent].max) {
+            myidkat.push(indexkat);
+          } else {
+            showToast(
+              "Maksimum " + homeData.online[indexEvent].max + " Bidang Studi",
+              "error"
+            );
+          }
+        } else {
+          showToast("Jadwal Bidang yang anda pilih Bentrok", "error");
+        }
+      }
+    }
+    console.log(myidkat, myfixreg);
+    SFR(".form1 .formbody").html(renderBidangStudi(mylist, myidkat, myfixreg));
+  });
+});
+function dispHome() {
+  if(profiles.jenjang == 'undefined' || profiles.sekolah == ''){
+      bannerFoto.click();
+      setTimeout(() => {
+          FdataP();
+          SFR('.formdataprofle .formbody').delay(500, dom=>{
+            dom.animateScrollTo(SFR('#jenjang'), 300)
+          });
+      }, 1000);
+      showToast('Jenjang anda undefined. Mohon diperbaiki', 'warning');
+  }
+  else{
+      let homefile = profiles.subjek.toLowerCase() + profiles.jenjang.toLowerCase().split(' ').join('');
+      let key = base64_encode("home");
+      getData(
+        "tdy",
+        {
+           token: 'gettoday'
+        },
+        (resp) => {
+            if (resp.response == "success") {
+                todays = resp.data;
+                hideload();
+                if (getStorage(key) != null && getJarakWaktu(todays,JSON.parse(repair(getStorage(key), key)).date,"Detik") > 0) {
+                  homeData = JSON.parse(repair(getStorage(key), key));
+                  showload()
+                  setTimeout(()=>{
+                    renderHome();
+                    hideload();
+                  }, 400)
+                 
+                } else {
+                  getfile(homefile, (resp) => {
+                    if (resp.response == "createfile") {
+                      createFileHome();
+                    } else {
+                          if (getJarakWaktu(todays, resp.data.date, "Detik") <= 0) {
+                             createFileHome();
+                          } else {
+                            homeData = {
+                              date: resp.data.date,
+                              online: resp.data.online,
+                              offline: resp.data.offline,
+                              pelatihan: resp.data.pelatihan,
+                            };
+                            setStorage(key, shake(JSON.stringify(resp.data), key));
+                            renderHome();
+                          }
+                    }
+                  });
+                }
+            }
+        }
+      );
+  }
+}
+
+function createFileHome() {
+  showload();
+  getData(
+    "home",
+    {
+      token: getCookie("token"),
+      order: "disphome",
+      subjek: profiles.subjek,
+      jenjang: profiles.jenjang,
+    },
+    (resp) => {
+      if (resp.response == "success") {
+          homeData = {
+            date: resp.data.date,
+            online: resp.data.online,
+            offline: resp.data.offline,
+            pelatihan: resp.data.pelatihan,
+          };
+          let key = base64_encode("home");
+          setStorage(key, shake(JSON.stringify(resp.data), key));
+          setTimeout(()=>{
+            dispHome();
+          }, 1000);
+      }
+      hideload();
+    }
+  );
+}
+
+function renderHome() {
+  SFR(".stage1, .stage2, .stage3").hide();
+  dispOnline();
+  dispOffline();
+  //  dispPelatihan();
+}
+function dispOnline() {
+  if (homeData.online.length > 0) {
+    SFR(".maindisp .stage1").show();
+    SFR(".maindisp .stage1").html(`
+            <div class="d-flex justify-content-between align-items-center flex-wrap mb-5 mt-100 gap-3">
+                <div class="d-flex flex-column">
+                    <div class="flex justify-content-start">
+                        <svg class="svg-icon" style="width: 32px;" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" stroke="currentColor" d="M147.994453 628.650667a42.666667 42.666667 0 0 0 42.666667-42.666667V231.125333a28.458667 28.458667 0 0 1 28.458667-28.458666H802.159787a28.458667 28.458667 0 0 1 28.458666 28.458666v354.858667a42.666667 42.666667 0 0 0 85.333334 0V231.125333A113.962667 113.962667 0 0 0 802.159787 117.333333H219.119787a113.92 113.92 0 0 0-113.792 113.792v354.858667a42.666667 42.666667 0 0 0 42.666666 42.666667zM1019.503787 701.568a21.333333 21.333333 0 0 0-16.810667-8.234667h-341.333333a21.333333 21.333333 0 0 0-21.333334 21.333334c0 30.293333-52.608 64-128 64s-128-33.706667-128-64a21.333333 21.333333 0 0 0-21.333333-21.333334h-341.333333a21.333333 21.333333 0 0 0-20.736 26.496 246.4 246.4 0 0 0 239.317333 186.837334h544.170667a246.314667 246.314667 0 0 0 239.274666-186.837334 21.333333 21.333333 0 0 0-3.882666-18.261333z"  /><path fill="currentColor" stroke="currentColor" d="M404.03712 401.066667a32 32 0 0 0 32-32V320a32 32 0 0 0-64 0v48.853333a32 32 0 0 0 32 32.213334zM649.370453 368.853333V320a32 32 0 0 0-64 0v48.853333a32 32 0 0 0 64 0zM326.85312 484.650667a31.957333 31.957333 0 0 0 0 45.226666 266.624 266.624 0 0 0 377.130667 0 32 32 0 0 0-45.269334-45.226666 202.709333 202.709333 0 0 1-286.634666 0 31.957333 31.957333 0 0 0-45.226667 0z"  /></svg>
+                        <span>Kompetisi Online</span>
+                    </div>
+                </div>
+            </div>
+            <div class="row col-lg-12"></div>`);
+    homeData.online.forEach((element, index) => {
+
+      let timerToken = pureItAsId(base64_encode(gettoday()+element.pos).toString().toLowerCase());
+      
+      SFR(".maindisp .stage1 .row").append(`
+               <div class="col-lg-4">
+                <div class="card mb-5 z-depth-9">
+                    <img src="${
+                      element.banner
+                    }" class="card-img-top" alt="#" loading="lazy">
+                    <div class="card-body">
+                        ${((element.twb == undefined || element.twb == '')? '':`<div class="banner-twibbon z-depth-3" onclick="twib('${element.twb}')">Twibbon</div>`)}
+                        <div class="judulevent">
+                            <h4 class="card-title">${element.judul}</h4>
+                            <h5 class="card-subtitle">${getNameDay(
+                              element.tanggal_event
+                            )}, ${beautyDate(element.tanggal_event)} <label id="evt${timerToken}">...</label></p></h5>
+                        </div>
+                        <div class="masaharga">
+                            <div class="msh">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M2 5C2 4.44772 2.44772 4 3 4H8.66667H21C21.5523 4 22 4.44772 22 5V8H15.3333H8.66667H2V5Z" fill="currentColor" stroke="currentColor" />
+                                    <path d="M6 8H2V11M6 8V20M6 8H14M6 20H3C2.44772 20 2 19.5523 2 19V11M6 20H14M14 8H22V11M14 8V20M14 20H21C21.5523 20 22 19.5523 22 19V11M2 11H22M2 14H22M2 17H22M10 8V20M18 8V20" stroke="currentColor" />
+                                </svg>
+                                <span>Masa Pendaftaran</span>
+                            </div>
+                            <div class="msh mb-3">
+                                <p>${beautyDate(
+                                  element.mulai_pendaftaran
+                                )} - ${beautyDate(
+                                  element.akhir_pendaftaran
+                                )}
+                            </div>
+                            <div class="msh">
+                                <svg width="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M21.9964 8.37513H17.7618C15.7911 8.37859 14.1947 9.93514 14.1911 11.8566C14.1884 13.7823 15.7867 15.3458 17.7618 15.3484H22V15.6543C22 19.0136 19.9636 21 16.5173 21H7.48356C4.03644 21 2 19.0136 2 15.6543V8.33786C2 4.97862 4.03644 3 7.48356 3H16.5138C19.96 3 21.9964 4.97862 21.9964 8.33786V8.37513ZM6.73956 8.36733H12.3796H12.3831H12.3902C12.8124 8.36559 13.1538 8.03019 13.152 7.61765C13.1502 7.20598 12.8053 6.87318 12.3831 6.87491H6.73956C6.32 6.87664 5.97956 7.20858 5.97778 7.61852C5.976 8.03019 6.31733 8.36559 6.73956 8.36733Z" fill="currentColor"></path>
+                                    <path opacity="0.4" d="M16.0374 12.2966C16.2465 13.2478 17.0805 13.917 18.0326 13.8996H21.2825C21.6787 13.8996 22 13.5715 22 13.166V10.6344C21.9991 10.2297 21.6787 9.90077 21.2825 9.8999H17.9561C16.8731 9.90338 15.9983 10.8024 16 11.9102C16 12.0398 16.0128 12.1695 16.0374 12.2966Z" fill="currentColor"></path>
+                                    <circle cx="18" cy="11.8999" r="1" fill="currentColor"></circle>
+                                </svg>
+                                <span>Biaya</span>
+                            </div>
+                            <div class="msh  mb-3">
+                                <p>${
+                                  element.reg_method == "Hybrid"
+                                    ? `Rp. ${formatMoney(
+                                        element.biaya
+                                      )} atau Gratis dengan Syarat`
+                                    : element.reg_method == "Berbayar"
+                                    ? `Rp. ${formatMoney(element.biaya)}`
+                                    : `Gratis dengan Syarat`
+                                }</p>
+                            </div>
+                            <div class="msh">
+                                <svg class="svg-icon" width="32" viewBox="0 0 1025 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" stroke="currentColor" d="M333.06186 733.061768c-58.347896 52.210106-97.040127 49.051159-136.467091 9.492188l-45.156456-48.462758c-39.427988-39.541575-39.427988-103.667058 0-143.226029l193.260585-193.848986c39.426965-39.558971 103.355973-39.558971 142.78396 0l35.679617 35.794228c30.457686 30.555923 37.398772 75.762521 20.801768 112.997564l86.286202 66.040089c59.149145-59.33027 59.149145-155.517983 0-214.830857L523.162476 249.600755c-59.133795-59.33027-155.010423-59.33027-214.160591 0L44.350342 515.071965c-59.133795 59.313897-59.133795 155.50161 0 214.830857l107.08797 107.415428c59.133795 59.313897 155.026796 59.313897 214.176964 0l102.161774-105.647155-72.980151-70.034053L333.06186 733.061768zM987.196021 285.394982 880.1234 177.979554c-59.149145-59.33027-155.026796-59.33027-214.176964 0 0 0 4.223185-1.064238-57.988716 61.343113l71.113641 68.167542 31.604812-34.877345c39.427988-39.541575 103.356996-39.541575 142.78396 0l35.69599 35.8106c39.427988 39.541575 39.427988 103.667058 0 143.226029L714.818517 632.847345c-39.427988 39.541575-103.340623 39.541575-142.768611 0l-29.395494-48.462758c-61.883419-46.25344-42.865273-57.317427-37.611619-88.544639L426.548044 418.130076c-59.150168 59.33027-59.150168 155.517983 0 214.830857l107.072621 107.432825c59.149145 59.312874 155.026796 59.312874 214.176964 0l239.398392-240.166895C1071.582967 402.924769 987.196021 285.394982 987.196021 285.394982z"  /></svg>
+                                <span>Link Juknis</span>
+                            </div>
+                            <div class="msh">
+                                <a href="${
+                                  element.juknis
+                                }" target="_blank">Lihat Juknis di sini</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cardfooter">
+                        <p class="card-text">
+                            <span class="text-muted">${
+                              element.jumpes
+                            } Pendaftar</span>
+                            <button class="btnreg z-depth-3" type="submit" posindex="${index}">
+                                <svg class="svg-icon" width="32" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+                                    <path fill="currentColor" stroke="currentColor" d="M493.411643 554.452881c-132.722814 0-240.718457-107.974154-240.718457-240.696967 0-132.701325 107.995643-240.675478 240.718457-240.675478s240.675478 107.974154 240.675478 240.675478C734.087121 446.478727 626.134457 554.452881 493.411643 554.452881zM493.411643 139.247414c-96.235808 0-174.551478 78.294181-174.551478 174.508499 0 96.235808 78.31567 174.529989 174.551478 174.529989s174.508499-78.294181 174.508499-174.529989C667.920142 217.541595 589.647451 139.247414 493.411643 139.247414z"  />
+                                    <path fill="currentColor" stroke="currentColor" d="M96.92347 950.919565c-18.264992 0-33.083489-14.818497-33.083489-33.083489 0-236.863662 192.686511-429.550173 429.571662-429.550173 104.808044 0 205.739804 38.188764 284.22739 107.521852 13.699 12.0832 14.991436 32.997532 2.929726 46.696532-12.147668 13.72049-33.040511 14.925944-46.696532 2.885723-66.425875-58.650795-151.806451-90.937129-240.460584-90.937129-200.398146 0-363.404684 163.006538-363.404684 363.383194C130.007983 936.101067 115.188462 950.919565 96.92347 950.919565z"  />
+                                    <path fill="currentColor" stroke="currentColor" d="M927.075507 837.861626 701.003632 837.861626c-18.264992 0-33.083489-14.818497-33.083489-33.083489s14.818497-33.083489 33.083489-33.083489l226.071875 0c18.264992 0 33.083489 14.818497 33.083489 33.083489S945.340499 837.861626 927.075507 837.861626z"  />
+                                    <path fill="currentColor" stroke="currentColor" d="M814.040081 950.898075c-18.264992 0-33.083489-14.818497-33.083489-33.083489L780.956591 691.741687c0-18.264992 14.818497-33.083489 33.083489-33.083489s33.083489 14.818497 33.083489 33.083489l0 226.071875C847.12357 936.079578 832.305073 950.898075 814.040081 950.898075z"  />
+                                </svg>
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            </div>`);
+
+      renderTimerEvt(timerToken, element.akhir_pendaftaran, todays);
+
+      SFR(".btnreg").on("click", function () {
+        let posindex = SFR(this).getAttr("posindex");
+        openformReg(posindex, SFR(this));
+      });
+    });
+  } else {
+    SFR(".maindisp .stage1").hide();
+  }
+}
+function dispOffline() {
+  // if (homeData.offline.length > 0) {
+  // SFR(".maindisp .offline").html(`
+  //         <div class="d-flex justify-content-between align-items-center flex-wrap mb-5 mt-100 gap-3">
+  //             <div class="d-flex flex-column">
+  //                 <div class="flex justify-content-start">
+  //                     <svg class="svg-icon" style="width: 32px;" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" stroke="currentColor" d="M147.994453 628.650667a42.666667 42.666667 0 0 0 42.666667-42.666667V231.125333a28.458667 28.458667 0 0 1 28.458667-28.458666H802.159787a28.458667 28.458667 0 0 1 28.458666 28.458666v354.858667a42.666667 42.666667 0 0 0 85.333334 0V231.125333A113.962667 113.962667 0 0 0 802.159787 117.333333H219.119787a113.92 113.92 0 0 0-113.792 113.792v354.858667a42.666667 42.666667 0 0 0 42.666666 42.666667zM1019.503787 701.568a21.333333 21.333333 0 0 0-16.810667-8.234667h-341.333333a21.333333 21.333333 0 0 0-21.333334 21.333334c0 30.293333-52.608 64-128 64s-128-33.706667-128-64a21.333333 21.333333 0 0 0-21.333333-21.333334h-341.333333a21.333333 21.333333 0 0 0-20.736 26.496 246.4 246.4 0 0 0 239.317333 186.837334h544.170667a246.314667 246.314667 0 0 0 239.274666-186.837334 21.333333 21.333333 0 0 0-3.882666-18.261333z"  /><path fill="currentColor" stroke="currentColor" d="M404.03712 401.066667a32 32 0 0 0 32-32V320a32 32 0 0 0-64 0v48.853333a32 32 0 0 0 32 32.213334zM649.370453 368.853333V320a32 32 0 0 0-64 0v48.853333a32 32 0 0 0 64 0zM326.85312 484.650667a31.957333 31.957333 0 0 0 0 45.226666 266.624 266.624 0 0 0 377.130667 0 32 32 0 0 0-45.269334-45.226666 202.709333 202.709333 0 0 1-286.634666 0 31.957333 31.957333 0 0 0-45.226667 0z"  /></svg>
+  //                     <span>Kompetisi Offline</span>
+  //                 </div>
+  //             </div>
+  //         </div>
+  //         <div class="row"></div>`);
+  // SFR('.maindisp .offline .row').html(`
+  // `);
+  // homeData.offline.forEach((element) => {
+  //   SFR(".maindisp .offline .row").append(`
+  //         <div class="col-sm-4 ">
+  //             <div class="card mb-3 z-depth-9">
+  //                 <img src="${
+  //                   element.banner
+  //                 }" class="card-img-top" alt="#" loading="lazy">
+  //                 <div class="card-body">
+  //                     <div class="judulevent">
+  //                         <h4 class="card-title">${element.judul}</h4>
+  //                         <h5 class="card-subtitle">${getNameDay(
+  //                           element.tanggal_event
+  //                         )}, ${beautyDate(element.tanggal_event)}</h5>
+  //                     </div>
+  //                     <div class="masaharga">
+  //                         <div class="msh">
+  //                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  //                                 <path d="M2 5C2 4.44772 2.44772 4 3 4H8.66667H21C21.5523 4 22 4.44772 22 5V8H15.3333H8.66667H2V5Z" fill="currentColor" stroke="currentColor" />
+  //                                 <path d="M6 8H2V11M6 8V20M6 8H14M6 20H3C2.44772 20 2 19.5523 2 19V11M6 20H14M14 8H22V11M14 8V20M14 20H21C21.5523 20 22 19.5523 22 19V11M2 11H22M2 14H22M2 17H22M10 8V20M18 8V20" stroke="currentColor" />
+  //                             </svg>
+  //                             <span>Masa Pendaftaran</span>
+  //                         </div>
+  //                         <div class="msh">
+  //                             <p>${beautyDate(
+  //                               element.mulai_pendaftaran
+  //                             )} - ${beautyDate(
+  //     element.akhir_pendaftaran
+  //   )}</p>
+  //                         </div>
+  //                         <div class="msh">
+  //                             <svg width="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  //                                 <path fill-rule="evenodd" clip-rule="evenodd" d="M21.9964 8.37513H17.7618C15.7911 8.37859 14.1947 9.93514 14.1911 11.8566C14.1884 13.7823 15.7867 15.3458 17.7618 15.3484H22V15.6543C22 19.0136 19.9636 21 16.5173 21H7.48356C4.03644 21 2 19.0136 2 15.6543V8.33786C2 4.97862 4.03644 3 7.48356 3H16.5138C19.96 3 21.9964 4.97862 21.9964 8.33786V8.37513ZM6.73956 8.36733H12.3796H12.3831H12.3902C12.8124 8.36559 13.1538 8.03019 13.152 7.61765C13.1502 7.20598 12.8053 6.87318 12.3831 6.87491H6.73956C6.32 6.87664 5.97956 7.20858 5.97778 7.61852C5.976 8.03019 6.31733 8.36559 6.73956 8.36733Z" fill="currentColor"></path>
+  //                                 <path opacity="0.4" d="M16.0374 12.2966C16.2465 13.2478 17.0805 13.917 18.0326 13.8996H21.2825C21.6787 13.8996 22 13.5715 22 13.166V10.6344C21.9991 10.2297 21.6787 9.90077 21.2825 9.8999H17.9561C16.8731 9.90338 15.9983 10.8024 16 11.9102C16 12.0398 16.0128 12.1695 16.0374 12.2966Z" fill="currentColor"></path>
+  //                                 <circle cx="18" cy="11.8999" r="1" fill="currentColor"></circle>
+  //                             </svg>
+  //                             <span>Harga</span>
+  //                         </div>
+  //                         <div class="msh">
+  //                             <p>${
+  //                               element.reg_method == "Hybrid"
+  //                                 ? `Rp. ${formatMoney(
+  //                                     element.biaya
+  //                                   )} atau Gratis dengan Syarat`
+  //                                 : element.reg_method == "Berbayar"
+  //                                 ? `Rp. ${formatMoney(element.biaya)}`
+  //                                 : `Gratis dengan Syarat`
+  //                             }</p>
+  //                         </div>
+  //                         <div class="msh">
+  //                             <svg class="svg-icon" width="32" viewBox="0 0 1025 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" stroke="currentColor" d="M333.06186 733.061768c-58.347896 52.210106-97.040127 49.051159-136.467091 9.492188l-45.156456-48.462758c-39.427988-39.541575-39.427988-103.667058 0-143.226029l193.260585-193.848986c39.426965-39.558971 103.355973-39.558971 142.78396 0l35.679617 35.794228c30.457686 30.555923 37.398772 75.762521 20.801768 112.997564l86.286202 66.040089c59.149145-59.33027 59.149145-155.517983 0-214.830857L523.162476 249.600755c-59.133795-59.33027-155.010423-59.33027-214.160591 0L44.350342 515.071965c-59.133795 59.313897-59.133795 155.50161 0 214.830857l107.08797 107.415428c59.133795 59.313897 155.026796 59.313897 214.176964 0l102.161774-105.647155-72.980151-70.034053L333.06186 733.061768zM987.196021 285.394982 880.1234 177.979554c-59.149145-59.33027-155.026796-59.33027-214.176964 0 0 0 4.223185-1.064238-57.988716 61.343113l71.113641 68.167542 31.604812-34.877345c39.427988-39.541575 103.356996-39.541575 142.78396 0l35.69599 35.8106c39.427988 39.541575 39.427988 103.667058 0 143.226029L714.818517 632.847345c-39.427988 39.541575-103.340623 39.541575-142.768611 0l-29.395494-48.462758c-61.883419-46.25344-42.865273-57.317427-37.611619-88.544639L426.548044 418.130076c-59.150168 59.33027-59.150168 155.517983 0 214.830857l107.072621 107.432825c59.149145 59.312874 155.026796 59.312874 214.176964 0l239.398392-240.166895C1071.582967 402.924769 987.196021 285.394982 987.196021 285.394982z"  /></svg>
+  //                             <span>Link Juknis</span>
+  //                         </div>
+  //                         <div class="msh">
+  //                             <a href="${
+  //                               element.juknis
+  //                             }" target="_blank">Lihat Juknis di sini</a>
+  //                         </div>
+  //                     </div>
+  //                 </div>
+  //                 <div class="cardfooter">
+  //                     <p class="card-text">
+  //                         <span class="text-muted">${
+  //                           element.jumpes
+  //                         } Pendaftar</span>
+  //                         <button class="btnreg z-depth-3" type="submit">
+  //                             <svg class="svg-icon" width="32" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  //                                 <path fill="currentColor" stroke="currentColor" d="M493.411643 554.452881c-132.722814 0-240.718457-107.974154-240.718457-240.696967 0-132.701325 107.995643-240.675478 240.718457-240.675478s240.675478 107.974154 240.675478 240.675478C734.087121 446.478727 626.134457 554.452881 493.411643 554.452881zM493.411643 139.247414c-96.235808 0-174.551478 78.294181-174.551478 174.508499 0 96.235808 78.31567 174.529989 174.551478 174.529989s174.508499-78.294181 174.508499-174.529989C667.920142 217.541595 589.647451 139.247414 493.411643 139.247414z"  />
+  //                                 <path fill="currentColor" stroke="currentColor" d="M96.92347 950.919565c-18.264992 0-33.083489-14.818497-33.083489-33.083489 0-236.863662 192.686511-429.550173 429.571662-429.550173 104.808044 0 205.739804 38.188764 284.22739 107.521852 13.699 12.0832 14.991436 32.997532 2.929726 46.696532-12.147668 13.72049-33.040511 14.925944-46.696532 2.885723-66.425875-58.650795-151.806451-90.937129-240.460584-90.937129-200.398146 0-363.404684 163.006538-363.404684 363.383194C130.007983 936.101067 115.188462 950.919565 96.92347 950.919565z"  />
+  //                                 <path fill="currentColor" stroke="currentColor" d="M927.075507 837.861626 701.003632 837.861626c-18.264992 0-33.083489-14.818497-33.083489-33.083489s14.818497-33.083489 33.083489-33.083489l226.071875 0c18.264992 0 33.083489 14.818497 33.083489 33.083489S945.340499 837.861626 927.075507 837.861626z"  />
+  //                                 <path fill="currentColor" stroke="currentColor" d="M814.040081 950.898075c-18.264992 0-33.083489-14.818497-33.083489-33.083489L780.956591 691.741687c0-18.264992 14.818497-33.083489 33.083489-33.083489s33.083489 14.818497 33.083489 33.083489l0 226.071875C847.12357 936.079578 832.305073 950.898075 814.040081 950.898075z"  />
+  //                             </svg>
+  //                         </button>
+  //                     </p>
+  //                 </div>
+  //             </div>
+  //         </div>`);
+  // });
+  // } else {
+  // SFR(".maindisp .offline").hide();
+  // }
+}
+
+function openformReg(index, dom) {
+  indexEvent = index;
+  kiri = dom.offset().left;
+  atas = dom.offset().top - window.pageYOffset;
+  lebar = dom.width();
+  tinggi = dom.height();
+  hideScrollBody();
+  SFR(".overlayForm")
+    .css({
+      display: "block",
+    })
+    .delay(30, (dom) => {
+      SFR(".floatbutton1, .floatbutton2")
+        .css({
+          left: kiri + "px",
+          top: atas + "px",
+          "margin-left": "0",
+          "margin-top": "0",
+          width: lebar + "px",
+          height: tinggi + "px",
+          display: "flex",
+        })
+        .delay(200, (dom) => {
+          SFR(dom[1])
+            .css({
+              left: "50%",
+              top: "50%",
+              width: "250px",
+              height: "40px",
+              "margin-top": "-50px",
+              "margin-left": "-125px",
+            })
+            .delay(100, (dom1) => {
+              dom1.children()[1].show();
+              SFR(dom[0])
+                .css({
+                  left: "50%",
+                  top: "50%",
+                  width: "250px",
+                  height: "40px",
+                  "margin-top": "10px",
+                  "margin-left": "-125px",
+                })
+                .children()[1]
+                .show()
+                .html("Pendaftaran Kolektif")
+                .parent()
+                .children()[0]
+                .css({
+                  width: "30px",
+                  height: "30px",
+                })
+                .html(`<path d="M11.9488 14.54C8.49884 14.54 5.58789 15.1038 5.58789 17.2795C5.58789 19.4562 8.51765 20.0001 11.9488 20.0001C15.3988 20.0001 18.3098 19.4364 18.3098 17.2606C18.3098 15.084 15.38 14.54 11.9488 14.54Z" fill="currentColor"></path>
+                        <path opacity="0.4" d="M11.949 12.467C14.2851 12.467 16.1583 10.5831 16.1583 8.23351C16.1583 5.88306 14.2851 4 11.949 4C9.61293 4 7.73975 5.88306 7.73975 8.23351C7.73975 10.5831 9.61293 12.467 11.949 12.467Z" fill="currentColor"></path>
+                        <path opacity="0.4" d="M21.0881 9.21923C21.6925 6.84176 19.9205 4.70654 17.664 4.70654C17.4187 4.70654 17.1841 4.73356 16.9549 4.77949C16.9244 4.78669 16.8904 4.802 16.8725 4.82902C16.8519 4.86324 16.8671 4.90917 16.8895 4.93889C17.5673 5.89528 17.9568 7.0597 17.9568 8.30967C17.9568 9.50741 17.5996 10.6241 16.9728 11.5508C16.9083 11.6462 16.9656 11.775 17.0793 11.7948C17.2369 11.8227 17.3981 11.8371 17.5629 11.8416C19.2059 11.8849 20.6807 10.8213 21.0881 9.21923Z" fill="currentColor"></path>
+                        <path d="M22.8094 14.817C22.5086 14.1722 21.7824 13.73 20.6783 13.513C20.1572 13.3851 18.747 13.205 17.4352 13.2293C17.4155 13.232 17.4048 13.2455 17.403 13.2545C17.4003 13.2671 17.4057 13.2887 17.4316 13.3022C18.0378 13.6039 20.3811 14.916 20.0865 17.6834C20.074 17.8032 20.1698 17.9068 20.2888 17.8888C20.8655 17.8059 22.3492 17.4853 22.8094 16.4866C23.0637 15.9589 23.0637 15.3456 22.8094 14.817Z" fill="currentColor"></path>
+                        <path opacity="0.4" d="M7.04459 4.77973C6.81626 4.7329 6.58077 4.70679 6.33543 4.70679C4.07901 4.70679 2.30701 6.84201 2.9123 9.21947C3.31882 10.8216 4.79355 11.8851 6.43661 11.8419C6.60136 11.8374 6.76343 11.8221 6.92013 11.7951C7.03384 11.7753 7.09115 11.6465 7.02668 11.551C6.3999 10.6234 6.04263 9.50765 6.04263 8.30991C6.04263 7.05904 6.43303 5.89462 7.11085 4.93913C7.13234 4.90941 7.14845 4.86348 7.12696 4.82926C7.10906 4.80135 7.07593 4.78694 7.04459 4.77973Z" fill="currentColor"></path>
+                        <path d="M3.32156 13.5127C2.21752 13.7297 1.49225 14.1719 1.19139 14.8167C0.936203 15.3453 0.936203 15.9586 1.19139 16.4872C1.65163 17.4851 3.13531 17.8066 3.71195 17.8885C3.83104 17.9065 3.92595 17.8038 3.91342 17.6832C3.61883 14.9167 5.9621 13.6046 6.56918 13.3029C6.59425 13.2885 6.59962 13.2677 6.59694 13.2542C6.59515 13.2452 6.5853 13.2317 6.5656 13.2299C5.25294 13.2047 3.84358 13.3848 3.32156 13.5127Z" fill="currentColor"></path>
+                        `);
+            });
+        });
+    });
+}
+
+SFR(".floatbutton1").on("click", function () {
+  getDataMember(profiles.kab_kota, (datamember) => {
+    memberdata = datamember.data;
+    SFR(".floatbutton2").hide().children()[1].hide();
+    let panelsrc = document.createElement("input");
+    panelsrc.type = "text";
+    panelsrc.className = "panelsrc";
+    panelsrc.placeholder = "Cari nama teman/murid anda ...";
+    SFR(this)
+      .children()[0]
+      .html(
+        `<rect opacity="0.5" x="17.0365" y="15.1223" width="8.15546" height="2" rx="1" transform="rotate(45 17.0365 15.1223)" fill="currentColor"></rect>
+            <path d="M11 19C6.55556 19 3 15.4444 3 11C3 6.55556 6.55556 3 11 3C15.4444 3 19 6.55556 19 11C19 15.4444 15.4444 19 11 19ZM11 5C7.53333 5 5 7.53333 5 11C5 14.4667 7.53333 17 11 17C14.4667 17 17 14.4667 17 11C17 7.53333 14.4667 5 11 5Z" fill="currentColor"></path>
+        `
+      )
+      .css({
+        width: "20px",
+        height: "20px",
+      })
+      .parent()
+      .css({
+        width:
+          getTypeDisplay() == "laptop"
+            ? "400px"
+            : SFR("body").width() - 40 + "px",
+        top: "50%",
+        "margin-top": getTypeDisplay() == "laptop" ? "-100px" : " -200px",
+        left: "50%",
+        "margin-left":
+          getTypeDisplay() == "laptop"
+            ? "-200px"
+            : -(SFR("body").width() - 40) / 2 + "px",
+      })
+      .children()[1]
+      .html("")
+      .addChild(panelsrc);
+    panelsrc.focus();
+
+    panelsrc.addEventListener("input", function (e) {
+      let kiri = SFR(".floatbutton1").offset().left + 15,
+        atas = SFR(".floatbutton1").offset().top - window.pageYOffset,
+        lebar = SFR(".floatbutton1").width() - 30,
+        tinggi = SFR(".floatbutton1").height();
+      SFR(this).delay(10, (dom) => {
+        let target = dom.value().toUpperCase(),
+          tampung = [];
+        memberdata.forEach((item, index) => {
+          if (target.length > 2) {
+            if (item.nama.toUpperCase().indexOf(target) != -1) {
+              if (!in_array(tampung, index)) {
+                tampung.push(index);
+              }
+            }
+            if (item.sekolah.toUpperCase().indexOf(target) != -1) {
+              if (!in_array(tampung, index)) {
+                tampung.push(index);
+              }
+            }
+          }
+        });
+        if (tampung.length > 0 && target.length > 0) {
+          SFR(".containerpanelsrc").css({
+            left: kiri + "px",
+            top: atas + tinggi + "px",
+            display: "block",
+            width: lebar + "px",
+          });
+          let displaypanelsrc = "";
+          tampung.forEach((item) => {
+            displaypanelsrc =
+              displaypanelsrc +
+              `<div class="panelitems" id="posdirect${item}" onclick = openCollectiveReg(${item})>
+                                                                <div class="nama">${filterAin(
+                                                                  memberdata[
+                                                                    item
+                                                                  ].nama
+                                                                )}</div>
+                                                                <div class="sekolah">${filterAin(
+                                                                  memberdata[
+                                                                    item
+                                                                  ].sekolah
+                                                                )}</div>
+                                                            </div>`;
+          });
+          SFR(".containerpanelsrc")
+            .html(displaypanelsrc)
+            .animateScrollTo(SFR("#posdirect" + tampung[0]), 300);
+        } else {
+          SFR(".containerpanelsrc").hide();
+        }
+      });
+    });
+  });
+});
+SFR(".floatbutton2").on("click", function () {
+  SFR(".floatbutton1").hide().children()[1].hide();
+  let kiris = SFR(".floatbutton2").offset().left,
+    atass = SFR(".floatbutton2").offset().top - window.pageYOffset,
+    lebars = SFR(".floatbutton2").width(),
+    tinggis = SFR(".floatbutton2").height();
+  SFR(".mainform")
+    .css({
+      left: kiris + "px",
+      top: atass + "px",
+      width: lebars + "px",
+      height: tinggis + "px",
+      "border-radius": "30px",
+      display: "block",
+    })
+    .delay(30, (dom) => {
+      dom
+        .css({
+          width: getTypeDisplay() == "laptop" ? "500px" : "100%",
+          height: getTypeDisplay() == "laptop" ? "600px" : "100%",
+          left: getTypeDisplay() == "laptop" ? "50%" : "0",
+          top: getTypeDisplay() == "laptop" ? "50%" : "0",
+          "border-radius": "10px",
+          "margin-left": getTypeDisplay() == "laptop" ? "-250px" : "0",
+          "margin-top": getTypeDisplay() == "laptop" ? "-300px" : "0",
+        })
+        .delay(300, (dom) => {
+          dom.children().forEach((item, ind) => {
+            item.children()[1].html("");
+            if (ind > 0) {
+              item.css({
+                left: dom.width() + "px",
+              });
+            } else {
+              item
+                .css({
+                  left: "0px",
+                })
+                .children()[0]
+                .children()[1]
+                .children()[0]
+                .html(filterAin(profiles.nama))
+                .parent()
+                .children()[1]
+                .html("Pendaftaran event " + homeData.online[indexEvent].judul);
+            }
+          });
+          SFR(".floatbutton2").hide().children()[1].hide();
+          showload();
+          getData(
+            "home",
+            {
+              token: getCookie("token"),
+              order: "getlistreg",
+              pose: homeData.online[indexEvent].pos,
+              posm: profiles.posm,
+              jenjang: profiles.jenjang,
+              subjek: profiles.subjek,
+            },
+            (resp) => {
+              if (resp.response == "success") {
+                myidkat = setMyIdKat(
+                  resp.data.myidkat,
+                  profiles.posm,
+                  homeData.online[indexEvent].pos
+                );
+                myfixreg = resp.data.myfixreg;
+                mylist = resp.data.list;
+
+                dom
+                  .children()[0]
+                  .children()[1]
+                  .html(renderBidangStudi(mylist, myidkat, myfixreg));
+
+                // console.log(homeData.online[indexEvent].reg_method);
+                let btnAddCart = new CreateButton(
+                  dom.children()[0].children()[2],
+                  "Berbayar",
+                  "btn-success"
+                );
+                btnAddCart.append();
+
+                let btnSyarat = new CreateButton(
+                  dom.children()[0].children()[2],
+                  "Gratis",
+                  "btn-warning"
+                );
+                btnSyarat.append();
+
+                btnAddCart.getButton().on("click", function () {
+                  let cartCondition = {
+                    left: SFR("#cartbutton").children()[1].offset().left,
+                    top:
+                      SFR("#cartbutton").children()[1].offset().top -
+                      window.pageYOffset,
+                    width: SFR("#cartbutton").children()[1].width(),
+                    height: SFR("#cartbutton").children()[1].height(),
+                  };
+
+                  let bidangDaftar = convertToBidangDaftar(myidkat, mylist);
+                  let palangReg = myfixreg.length > 0 ? false : true;
+
+                  myidkat.forEach((item) => {
+                    let indx = myfixreg.indexOf(item);
+                    if (indx == -1) {
+                      palangReg = true;
+                    }
+                  });
+                  if (bidangDaftar.length > 0) {
+                    if (palangReg) {
+                      var target = {
+                        pos: homeData.online[indexEvent].pos,
+                        posm: profiles.posm,
+                        judul: homeData.online[indexEvent].judul,
+                        nama: profiles.nama,
+                        prov: profiles.provinsi,
+                        kab: profiles.kab_kota,
+                        sekolah: profiles.sekolah,
+                        item: bidangDaftar,
+                        harga: homeData.online[indexEvent].biaya,
+                        jumlah: 1,
+                      };
+                      var palangExist = false,
+                        posisinya = -1;
+                      myCart.pendaftaran.forEach((item, idx) => {
+                        if (
+                          item.pos == target.pos &&
+                          item.posm == target.posm
+                        ) {
+                          palangExist = true;
+                          posisinya = idx;
+                        }
+                      });
+                      if (palangExist) {
+                        myCart.pendaftaran[posisinya].item = target.item;
+                      } else {
+                        myCart.pendaftaran.push(target);
+                      }
+                      send2Cart(cartCondition);
+                      setTimeout(()=>{
+                         showToast("berhasil ditambahkan ke keranjang");
+                         SFR('#cartbutton').click();
+                      }, 1000)
+                    } else {
+                      showToast(
+                        "Bidang Studi sudah terdaftar, silahkan cek menu jadwal",
+                        "error"
+                      );
+                    }
+                  } else {
+                    showToast("Tidak ada Bidang Studi yang dipilih", "error");
+                  }
+                });
+
+                btnSyarat.getButton().on("click", function () {
+                  let bidangDaftar = convertToBidangDaftar(myidkat, mylist);
+                  let palangReg = resp.data.myfixreg.length > 0 ? false : true;
+
+                  myidkat.forEach((item) => {
+                    var index = myfixreg.indexOf(item);
+                    if (index == -1) {
+                      palangReg = true;
+                    }
+                  });
+                  if (bidangDaftar.length > 0) {
+                    if (palangReg) {
+                      dom
+                        .children()[0]
+                        .css({
+                          left: -dom.width() + "px",
+                        })
+                        .parent()
+                        .children()[1]
+                        .css({
+                          left: "0",
+                        })
+                        .children()[0]
+                        .children()[1]
+                        .children()[0]
+                        .html("Syarat Pendaftaran")
+                        .parent()
+                        .children()[1]
+                        .html(homeData.online[indexEvent].judul);
+                      let syaratUploaders = [];
+
+                      homeData.online[indexEvent].syarat.forEach((item) => {
+                        syaratUploaders.push(
+                          new CreateUploader(SFR(".form2 .formbody"), item, "")
+                        );
+                      });
+                      let kandidat = [];
+                      syaratUploaders.forEach((item, index) => {
+                        item.append();
+                        item.getInputer().on("change", function (e) {
+                          preventWarningCode(
+                            e.target.files[0],
+                            (palang, data) => {
+                              if (palang) {
+                                item.setImage(data);
+                                resizeBase64Image(data, 50, (resp) => {
+                                  kandidat[index] = resp;
+                                });
+                              } else {
+                                showToast(
+                                  "gambar terindikasi mengandung code mengancam, crop menggunakan ms paint",
+                                  "error"
+                                );
+                              }
+                            }
+                          );
+                        });
+                      });
+                      let btnDaftar = new CreateButton(
+                        SFR(".form2 .formfooter"),
+                        "Daftar",
+                        "btn-success"
+                      );
+                      btnDaftar.append();
+                      btnDaftar.getButton().on("click", function () {
+                        let idnull = "",
+                          palang = true,
+                          message = "";
+                        homeData.online[indexEvent].syarat.forEach(
+                          (item, idx) => {
+                            if (typeof kandidat[idx] === "undefined") {
+                              if (idnull == "") {
+                                idnull = pureItAsId(item);
+                                message = "Syarat " + item + " masih kosong";
+                              }
+                              palang = false;
+                            }
+                          }
+                        );
+                        if (palang) {
+                          showload();
+                          getData(
+                            "home",
+                            {
+                              order: "freereg",
+                              token: getCookie("token"),
+                              bidangdaftar: JSON.stringify(bidangDaftar),
+                              syarat: JSON.stringify(kandidat),
+                              pose: homeData.online[indexEvent].pos,
+                            },
+                            function (resp) {
+                              if (resp.response == "success") {
+                                showToast(resp.data, "success");
+                                SFR(".form1 .posback")
+                                  .click()
+                                  .delay(1000, (dom) => {
+                                    forceDirectJadwal();
+                                  });
+                              }
+                              hideload();
+                            }
+                          );
+                        } else {
+                          SFR(".form2 .formbody").animateScrollTo(
+                            SFR("#" + idnull),
+                            300
+                          );
+                          showToast(message, "error");
+                        }
+                      });
+                    } else {
+                      showToast(
+                        "Bidang Studi sudah terdaftar, silahkan cek menu jadwal",
+                        "error"
+                      );
+                    }
+                  } else {
+                    showToast("Tidak ada Bidang Studi yang dipilih", "error");
+                  }
+                });
+
+                if (homeData.online[indexEvent].reg_method == "Gratis") {
+                  btnAddCart.getButton()[0].remove();
+                } else if (
+                  homeData.online[indexEvent].reg_method == "Berbayar"
+                ) {
+                  btnSyarat.getButton()[0].remove();
+                }
+              }
+              hideload();
+            }
+          );
+        });
+    });
+});
+
+function openCollectiveReg(index) {
+  SFR(".containerpanelsrc").hide();
+  let kiris = SFR(".floatbutton1").offset().left,
+    atass = SFR(".floatbutton1").offset().top - window.pageYOffset,
+    lebars = SFR(".floatbutton1").width(),
+    tinggis = SFR(".floatbutton1").height();
+
+  SFR(".mainform")
+    .css({
+      left: kiris + "px",
+      top: atass + "px",
+      width: lebars + "px",
+      height: tinggis + "px",
+      "border-radius": "30px",
+      display: "block",
+    })
+    .delay(10, (dom) => {
+      dom
+        .css({
+          width: getTypeDisplay() == "laptop" ? "500px" : "100%",
+          height: getTypeDisplay() == "laptop" ? "600px" : "100%",
+          left: getTypeDisplay() == "laptop" ? "50%" : "0",
+          top: getTypeDisplay() == "laptop" ? "50%" : "0",
+          "border-radius": "10px",
+          "margin-left": getTypeDisplay() == "laptop" ? "-250px" : "0",
+          "margin-top": getTypeDisplay() == "laptop" ? "-300px" : "0",
+        })
+        .delay(300, (dom) => {
+          dom.children().forEach((item, ind) => {
+            item.children()[1].html("");
+            if (ind > 0) {
+              item.css({
+                left: dom.width() + "px",
+              });
+            } else {
+              item
+                .css({
+                  left: "0px",
+                })
+                .children()[0]
+                .children()[1]
+                .children()[0]
+                .html(filterAin(memberdata[index].nama))
+                .parent()
+                .children()[1]
+                .html("Pendaftaran event " + homeData.online[indexEvent].judul);
+            }
+          });
+          SFR(".floatbutton1").hide().children()[1].hide();
+          showload();
+          getData(
+            "home",
+            {
+              token: getCookie("token"),
+              order: "getlistreg",
+              pose: homeData.online[indexEvent].pos,
+              posm: memberdata[index].posm,
+              jenjang: memberdata[index].jenjang,
+              subjek: memberdata[index].subjek,
+            },
+            (resp) => {
+              if (resp.response == "success") {
+                myidkat = setMyIdKat(
+                  resp.data.myidkat,
+                  memberdata[index].posm,
+                  homeData.online[indexEvent].pos
+                );
+                myfixreg = resp.data.myfixreg;
+                mylist = resp.data.list;
+
+                dom
+                  .children()[0]
+                  .children()[1]
+                  .html(renderBidangStudi(mylist, myidkat, myfixreg));
+
+                // console.log(homeData.online[indexEvent].reg_method);
+                let btnAddCart = new CreateButton(
+                  dom.children()[0].children()[2],
+                  "Tambah Keranjang",
+                  "btn-success"
+                );
+                btnAddCart.append();
+
+                let btnBatal = new CreateButton(
+                  dom.children()[0].children()[2],
+                  "Batal",
+                  "btn-danger"
+                );
+                btnBatal.append();
+
+                btnAddCart.getButton().on("click", function () {
+                  let cartCondition = {
+                    left: SFR("#cartbutton").children()[1].offset().left,
+                    top:
+                      SFR("#cartbutton").children()[1].offset().top -
+                      window.pageYOffset,
+                    width: SFR("#cartbutton").children()[1].width(),
+                    height: SFR("#cartbutton").children()[1].height(),
+                  };
+
+                  let bidangDaftar = convertToBidangDaftar(myidkat, mylist);
+                  let palangReg = myfixreg.length > 0 ? false : true;
+
+                  myidkat.forEach((item) => {
+                    let indx = myfixreg.indexOf(item);
+                    if (indx == -1) {
+                      palangReg = true;
+                    }
+                  });
+                  if (bidangDaftar.length > 0) {
+                    if (palangReg) {
+                      var target = {
+                        pos: homeData.online[indexEvent].pos,
+                        posm: memberdata[index].posm,
+                        judul: homeData.online[indexEvent].judul,
+                        nama: memberdata[index].nama,
+                        prov: memberdata[index].provinsi,
+                        kab: memberdata[index].kab,
+                        sekolah: memberdata[index].sekolah,
+                        item: bidangDaftar,
+                        harga: homeData.online[indexEvent].biaya,
+                        jumlah: 1,
+                      };
+                      var palangExist = false,
+                        posisinya = -1;
+                      myCart.pendaftaran.forEach((item, idx) => {
+                        if (
+                          item.pos == target.pos &&
+                          item.posm == target.posm
+                        ) {
+                          palangExist = true;
+                          posisinya = idx;
+                        }
+                      });
+                      if (palangExist) {
+                        myCart.pendaftaran[posisinya].item = target.item;
+                      } else {
+                        myCart.pendaftaran.push(target);
+                      }
+                      send2Cart(cartCondition);
+                      setTimeout(()=>{
+                          showToast("berhasil ditambahkan ke keranjang");
+                          SFR('#cartbutton').click();
+                      }, 1000)
+                    } else {
+                      showToast(
+                        "Bidang Studi sudah terdaftar, silahkan cek menu jadwal",
+                        "error"
+                      );
+                    }
+                  } else {
+                    showToast("Tidak ada Bidang Studi yang dipilih", "error");
+                  }
+                });
+
+                btnBatal.getButton().on("click", function () {
+                  SFR(".form1 .posback").click();
+                });
+              }
+              hideload();
+            }
+          );
+        });
+    });
+}
+
+SFR(".form1 .posback").on("click", function () {
+  SFR(".mainform")
+    .children()
+    .forEach((item) => {
+      item.css({
+        left: SFR(".mainform").width() + "px",
+      });
+      item.children()[1].html("").parent().children()[2].html("");
+    });
+  SFR(".mainform").delay(300, (dom) => {
+    dom
+      .css({
+        left: kiri + "px",
+        top: atas + "px",
+        width: lebar + "px",
+        height: tinggi + "px",
+        "border-radius": "100%",
+        "margin-top": "0",
+        "margin-left": "0",
+        display: "flex",
+      })
+      .delay(300, (dom) => {
+        dom.hide();
+        dom.parent().hide();
+        if (
+          window.getComputedStyle(SFR(".overlayExam")[0])["display"] == "none"
+        ) {
+          showScrollBody();
+        }
+        if (invExpired.length > 0) {
+          expinv(invExpired);
+        }
+      });
+  });
+  SFR(".tema .namesrc")
+    .hide()
+    .css({
+      width: "30px",
+    })
+    .children()[1]
+    .hide()
+    .setValue("")
+    .parent()
+    .children()[0]
+    .css({
+      left: null,
+    });
+  if (cartFormIndicator) {
+    saveMyCart();
+  }
+});
+
+SFR(".form2 .posback").on("click", function () {
+  if (
+    parseInt(window.getComputedStyle(SFR(".mainform .form1")[0])["left"]) < 0
+  ) {
+    SFR(".mainform")
+      .children()[0]
+      .css({
+        left: "0",
+      })
+      .parent()
+      .children()[1]
+      .css({
+        left: SFR(".mainform").width() + "px",
+      })
+      .children()[1]
+      .html("")
+      .parent()
+      .children()[2]
+      .html("")
+      .parent()
+      .parent()
+      .css({
+        width: getTypeDisplay() == "laptop" ? "500px" : "100%",
+        height: getTypeDisplay() == "laptop" ? "600px" : "100%",
+        left: getTypeDisplay() == "laptop" ? "50%" : "0",
+        top: getTypeDisplay() == "laptop" ? "50%" : "0",
+        "border-radius": "10px",
+        "margin-left": getTypeDisplay() == "laptop" ? "-250px" : "0",
+        "margin-top": getTypeDisplay() == "laptop" ? "-300px" : "0",
+      });
+  }
+});
+
+SFR(".form3 .posback").on("click", function () {
+  if (
+    parseInt(window.getComputedStyle(SFR(".mainform .form2")[0])["left"]) < 0
+  ) {
+    SFR(".mainform")
+      .children()[1]
+      .css({
+        left: "0",
+      })
+      .parent()
+      .children()[2]
+      .css({
+        left: SFR(".mainform").width() + "px",
+      })
+      .children()[1]
+      .html("")
+      .parent()
+      .children()[2]
+      .html("")
+      .parent()
+      .parent()
+      .css({
+        width: getTypeDisplay() == "laptop" ? "500px" : "100%",
+        height: "200px",
+        left: getTypeDisplay() == "laptop" ? "50%" : "0",
+        top: "50%",
+        "border-radius": "10px",
+        "margin-left": getTypeDisplay() == "laptop" ? "-250px" : "0",
+        "margin-top": "-100px",
+      });
+  }
+});
+
+function convertToBidangDaftar(myidkat, list) {
+  var bidangDaftar = [];
+  myidkat.forEach((pos, index) => {
+    list.forEach((bidang, index) => {
+      if (pos == bidang.pos) {
+        bidangDaftar.push({
+          pose: bidang.pose,
+          posm: bidang.posm,
+          mulai: bidang.mulai,
+          akhir: bidang.akhir,
+          posk: bidang.pos,
+          bidang: bidang.bidang_studi + " - " + bidang.jenjang,
+        });
+      }
+    });
+  });
+  return bidangDaftar;
+}
+
+function renderBidangStudi(list, myidkat, myfixreg) {
+  let render = ``;
+  list.forEach((item, pos) => {
+    if (in_array(myfixreg, item.pos)) {
+      // kodinsi teregistrasi
+      render =
+        render +
+        `<div class="card-info z-depth-9" id="btnregbdg" meta="${item.pos}">
+                                    <div class="banner-info">
+                                        <img src="${
+                                          item.banner
+                                        }" class="banner-produk">
+                                    </div>
+                                    <div class="ket-info">
+                                        <div class="ket">
+                                            ${item.bidang_studi}  ${
+          item.subjek
+        } - ${item.jenjang}
+                                        </div>
+                                        <div class="status">
+                                            ${getNameDay(
+                                              item.mulai.split(" ")[0]
+                                            )}, ${beautyDate(
+          item.mulai.split(" ")[0]
+        )}
+                                        </div>
+                                        <div class="rincian">
+                                            ${item.mulai.split(" ")[1]} - ${
+          item.akhir.split(" ")[1]
+        }
+                                        </div>
+                                    </div>
+                                    <div class="harga  z-depth-3">
+                                        <div class="btnorder">
+                                            registered
+                                        </div>
+                                    </div>
+                                </div>`;
+    } else if (in_array(myidkat, item.pos) && !in_array(myfixreg, item.pos)) {
+      // kondisi added
+      render =
+        render +
+        `<div class="card-info z-depth-9" id="btnregbdg" meta="${item.pos}">
+                                    <div class="banner-info">
+                                        <img src="${
+                                          item.banner
+                                        }" class="banner-produk">
+                                    </div>
+                                    <div class="ket-info">
+                                        <div class="ket">
+                                            ${item.bidang_studi}  ${
+          item.subjek
+        } - ${item.jenjang}
+                                        </div>
+                                        <div class="status">
+                                            ${getNameDay(
+                                              item.mulai.split(" ")[0]
+                                            )}, ${beautyDate(
+          item.mulai.split(" ")[0]
+        )}
+                                        </div>
+                                        <div class="rincian">
+                                            ${item.mulai.split(" ")[1]} - ${
+          item.akhir.split(" ")[1]
+        }
+                                        </div>
+                                    </div>
+                                    <div class="harga  z-depth-3 added">
+                                        <div class="btnorder">
+                                            added
+                                        </div>
+                                    </div>
+                                </div>`;
+    } else {
+      // belum added atau registered
+      render =
+        render +
+        `<div class="card-info unz-depth" id="btnregbdg" meta="${item.pos}">
+                                    <div class="banner-info">
+                                        <img src="${
+                                          item.banner
+                                        }" class="banner-produk">
+                                    </div>
+                                    <div class="ket-info">
+                                        <div class="ket">
+                                            ${item.bidang_studi}  ${
+          item.subjek
+        } - ${item.jenjang}
+                                        </div>
+                                        <div class="status">
+                                            ${getNameDay(
+                                              item.mulai.split(" ")[0]
+                                            )}, ${beautyDate(
+          item.mulai.split(" ")[0]
+        )}
+                                        </div>
+                                        <div class="rincian">
+                                            ${item.mulai.split(" ")[1]} - ${
+          item.akhir.split(" ")[1]
+        }
+                                        </div>
+                                    </div>
+                                    <div class="harga  z-depth-3 d-none">
+                                        <div class="btnorder">
+                                            added
+                                        </div>
+                                    </div>
+                                </div>`;
+    }
+  });
+  return render;
+}
+
+function getKeyListReg(indexkat, list, key) {
+  let value = "";
+  list.forEach((item) => {
+    if (item.pos == indexkat) {
+      value = item[key];
+    }
+  });
+  return value;
+}
+
+function setMyIdKat(myidkat, posm, pose) {
+  myCart.pendaftaran.forEach((item) => {
+    if (item.pos == pose && item.posm == posm) {
+      item.item.forEach((elem) => {
+        if (!in_array(myidkat, elem.posk)) {
+          myidkat.push(elem.posk);
+        }
+      });
+    }
+  });
+  console.log(myidkat);
+  return myidkat;
+}
+
+function renderTimerEvt(timerToken, akhir, today){
+  let duration = getJarakWaktu(today, akhir, 'Hari');
+  if(duration > 1){
+     SFR('#evt'+timerToken).html(duration + ' hari lagi')
+  }
+  else{
+     if(duration == 1){
+     
+         let long = getJarakWaktu(today, akhir, 'Detik');
+         countTimer(timerToken, long);
+     }
+     else{
+        SFR('#evt'+timerToken).html('closed').css({'color':'red'})
+     }
+  }
+}
+
+
+function countTimer(timerToken, selisih) {
+  
+  setInterval(function() {
+          selisih--;
+          
+          if (selisih > 0) {
+              var sisaDetik = selisih % 3600;
+              var terbagi = selisih - sisaDetik;
+              var jams = 0;
+              var menits = 0;
+              var detiks = 0;
+
+              if (selisih >= 3600) {
+                  // kondisi lebih dari 1 jam
+                  jams = terbagi / 3600;
+                  if (sisaDetik > 0) {
+                      var sisaMenit = sisaDetik % 60;
+                      var dMenit = sisaDetik - sisaMenit;
+                      if (dMenit >= 60) {
+                          menits = dMenit / 60;
+                          if (sisaMenit > 0) {
+                              detiks = sisaMenit
+                          } else {
+                              detiks = 0;
+                          }
+                      } else {
+                          menits = 0;
+                          if (sisaMenit > 0) {
+                              detiks = sisaMenit
+                          } else {
+                              detiks = 0;
+                          }
+
+                      }
+                  } else {
+                      menits = 0;
+                      detiks = sisaDetik;
+                  }
+              } else {
+                  jams = 0;
+                  if (sisaDetik > 0) {
+                      var sisaMenit = sisaDetik % 60;
+                      var dMenit = sisaDetik - sisaMenit;
+                      if (dMenit >= 60) {
+                          menits = dMenit / 60;
+                          if (sisaMenit > 0) {
+                              detiks = sisaMenit
+                          } else {
+                              detiks = 0;
+                          }
+                      } else {
+                          menits = 0;
+                          if (sisaMenit > 0) {
+                              detiks = sisaMenit
+                          } else {
+                              detiks = 0;
+                          }
+                      }
+                  } else {
+                      menits = 0;
+                      detiks = sisaDetik;
+                  }
+              }
+              if( SFR('#evt'+timerToken).length>0){
+                  SFR('#evt'+timerToken).html((jams==0? '':jams + 'h ') + (menits==0?'':menits + 'm ') + detiks + 's lagi').css({
+                      'color':'#e2910e'
+                  })
+              }
+          } else {
+            if( SFR('#evt'+timerToken).length>0){
+                 SFR('#evt'+timerToken).html('closed').css({
+                    'color':'red'
+                });
+             }
+          }
+      },
+      1000);
+}

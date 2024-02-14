@@ -1,0 +1,514 @@
+var printKontext = '';
+var invoiceUp = false;
+var numOrder = 0;
+SFR("#closeasset").on("click", function () {
+    if (!dontDisturbme) {
+      SFR(".overlayAsset .contentAsset")[0].style.backgroundPositionY = "100%";
+      SFR(".contentAsset").html("").hide();
+      SFR(".overlayAsset").hide();
+      SFR(".invContainer").hide().html("");
+      showScrollBody();
+      SFR('#certdisp').hide();
+    } else {
+      showToast(
+        "Sedang merender data. Mohon tunggu hingga selesai",
+        "warning"
+      );
+    }
+});
+
+SFR('#printerasset').on('click', function(){
+    if (!dontDisturbme) {
+       
+        let invs = SFR(".contentAsset").children();
+        
+        switch(printKontext){
+          case 'inv':
+            let pdf = new jsPDF();
+            invs.forEach((elem, index)=>{
+                pdf.addImage(elem[0].src, 'JPEG', 0, 0, 210, 297);
+                if(index < (invs.length-1)){
+                    pdf.addPage();
+                }
+            });
+            pdf.save("inv_"+invTheme+".pdf");
+            break;
+          case 'cert':
+            let img = new Image();
+            img.onload = function(){
+                let height = img.height;
+                let width = img.width;  
+                if(height > width){
+                  let pdf = new jsPDF('p');
+                  pdf.addImage(img.src, 'JPEG', 0, 0, 210, 297);
+                  pdf.save("cert_"+invTheme+".pdf");
+                }    
+                else{
+                  let pdf = new jsPDF('l');
+                  pdf.addImage(img.src, 'JPEG', 0, 0, 297,210);
+                  pdf.save("cert_"+invTheme+".pdf");
+                }         
+                
+            }
+            img.src = invs[0][0].src;  
+            break;
+          case 'piag':
+              let imgpiag = new Image();
+              imgpiag.onload = function(){
+                  let height = imgpiag.height;
+                  let width = imgpiag.width;  
+                  if(height > width){
+                    let pdf = new jsPDF('p');
+                    pdf.addImage(imgpiag.src, 'JPEG', 0, 0, 210, 297);
+                    pdf.save("piag_"+invTheme+".pdf");
+                  }    
+                  else{
+                    let pdf = new jsPDF('l');
+                    pdf.addImage(imgpiag.src, 'JPEG', 0, 0, 297,210);
+                    pdf.save("piag_"+invTheme+".pdf");
+                  }         
+                  
+              }
+              imgpiag.src = invs[0][0].src;  
+            break;
+        }
+       
+    } else {
+        switch(printKontext){
+          case 'inv':
+            showToast(
+              "Sedang merender invoice. Mohon tunggu hingga selesai",
+              "warning"
+            );
+            break;
+        }
+        
+    }
+});
+function displayInv(inv) {
+  let indexPos = -1;
+  transData.data.forEach((elem, index) => {
+    if (elem.no_transaksi == inv) {
+      indexPos = index;
+    }
+  });
+  let dt = transData.data[indexPos];
+  let subjOrd = (in_array_str(dt.data_order.cuttingpoin.subjek, dt.data_order.cuttingpoin.target)? true: false);
+  openInvoice(dt.no_transaksi, dt.rek,dt.atan, dt.amount, dt.status, dt.tanggal_expired, dt.data_order, dt.kode_unik, dt.lembaga, subjOrd);
+}
+let total = 0,
+  dontDisturbme = false,
+  invTheme = '';
+function openInvoice(inv, nor, atan, amount, stts, exp, dataOrder, ku, lembaga, so){
+  numOrder = 0;
+  invoiceUp = true;
+  invTheme = inv;
+  printKontext = 'inv';
+  let concernData = dataOrder.shipper;
+  let concernPalang = ((concernData.jenis == 'JnT Cargo' && concernData.tarif == 1) ? false: true);
+  SFR('#printerasset').show();
+  SFR('.headerAsset .theme').html('INVOICE #'+inv);
+  hideScrollBody();
+  SFR(".overlayAsset").show();
+  SFR(".contentAsset")
+    .show()
+    .css({
+      width:
+        SFR("body").width() > 900 ? "900px" : SFR("body").width() - 20 + "px",
+      "margin-left":
+        SFR("body").width() > 900
+          ? (SFR("body").width() - 900) / 2 + "px"
+          : "10px",
+    });
+  total = 0;
+  SFR(".invContainer").show().html("");
+  let pages = document.createElement("div");
+  pages.className = "pages";
+  pages.innerHTML = `
+    <div class="card rounded domrender" style="border:none">
+        <div class="card-body">
+                <div class="row">
+                    <div style="width:100%">    
+                        <h4 class="mb-0">INVOICE #...</h4>                              
+                        <h4 class="mb-5" style="font-size: 16px;"></h4>
+                        <div class="logolembaga">
+                            <img src="assets/images/logo/puspresnus.png">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div style="width:33%" class="col">
+                        <h5>Transfer ke:</h5>
+                        <p><b>BANK MANDIRI</b><br>
+                        No. Rek <b></b><br>
+                        An. <b></b></p>
+                    </div>
+                    <div  style="width:25%" class="col">
+                        <h5>Jumlah Tagihan:</h5>
+                        <h4></h4>
+                    </div>
+                    <div  style="width:25%" class="col">
+                        <h5>Status Pembayaran:</h5>
+                        <p class=""></p>
+                        <p></p>
+                    </div>
+                    <div  style="width:17%" class="text-end col">
+                        <h5>Jatuh Tempo:</h5>
+                        <p></p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12 mt-4">
+                        <div class="table-responsive-lg">
+                            <table class="table billing">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Description</th>
+                                    <th scope="col">Price</th>
+                                    <th scope="col">Quantity</th>
+                                    <th class="text-end" scope="col">Sub-Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                            </table>
+                        </div>
+                    </div>                              
+                </div>
+                </div>
+            </div>`;
+  SFR(".invContainer").addChild(pages);
+
+
+  let kepala = SFR(".invContainer")
+    .children()[0]
+    .children()[0]
+    .children()[0]
+    .children()[0]
+    .children()[0]
+    .children();
+
+  kepala[0].html("INVOICE #" + inv);
+  kepala[1].html(filterAin(profiles.nama));
+
+  let leher = SFR(".invContainer")
+    .children()[0]
+    .children()[0]
+    .children()[0]
+    .children()[1]
+    .children();
+
+  leher[0].children()[1].children()[2].html(nor);
+  leher[0].children()[1].children()[4].html(atan);
+
+  leher[1]
+    .children()[1]
+    .html("Rp. " + formatMoney(amount));
+  let status = stts.toLowerCase();
+  leher[2]
+    .children()[1]
+    .html(status == "unpaid" ? "UNPAID" : "PAID")
+    .addClass(status == "unpaid" ? "unpaid" : "succeed");
+
+  leher[3]
+    .children()[1]
+    .html(beautyDate(exp));
+
+  SFR(".invContainer")
+    .children()[0]
+    .children()[0]
+    .children()[0]
+    .children()[2]
+    .children()[0]
+    .children()[0]
+    .children()[0]
+    .children()[1]
+    .html("");
+  dontDisturbme = true;
+  window.scroll(0,0);
+  setTimeout(()=>{
+    hideScrollBody();
+    renderInvPendaftaran(0, dataOrder, (resp1) => {
+      if (resp1) {
+        renderInvPaket(0, dataOrder, (resp2) => {
+          if (resp2) {
+            renderInvOngkos(dataOrder, (resp3) => {
+              if (resp3) {
+                renderInvTotal(dataOrder,ku,so,  (resp4) => {
+                  // hideload();
+                  SFR(".invContainer").hide();
+                  dontDisturbme = false;
+                  showToast('invoice rendered', 'success');
+                  SFR(
+                    ".overlayAsset .contentAsset"
+                  )[0].style.backgroundPositionY = "120%";
+                });
+              }
+            });
+          }
+        });
+      }
+    });
+  },1000)
+}
+
+function renderInvPendaftaran(index, dataOrder, resp1 = () => {}) {
+  if (index < dataOrder.pendaftaran.length) {
+    let elem = dataOrder.pendaftaran[index];
+    let pages = SFR(".invContainer").children();
+    pages[0]
+      .children()[0]
+      .children()[0]
+      .children()[2]
+      .children()[0]
+      .children()[0]
+      .children()[0]
+      .children()[1].append(`
+            <tr>
+                <td>
+                    <h6 class="mb-0">Pendaftaran ${
+                      elem.judul
+                    } Berbayar <br/> (+Bonus Pembahasan) <br/> ${filterAin(elem.nama)} - ${
+      filterAin(elem.sekolah)
+    }</h6>
+                    <p>${jabarkanbidang(elem.item)}</p>
+                </td>
+                <td style="width:150px">Rp. ${formatMoney(elem.harga)}</td>
+                <td>${elem.jumlah}</td>
+                <td class="text-end" style="width:150px">Rp. ${formatMoney(
+                  (elem.harga * elem.jumlah).toString()
+                )}</td>
+            </tr>`);
+    total += elem.jumlah * parseInt(elem.harga);
+    numOrder += elem.jumlah;
+    capturePages(index, dataOrder, "pendaftaran", resp1);
+  } else {
+    resp1(true);
+  }
+}
+
+function renderInvPaket(index, dataOrder, resp2 = () => {}) {
+  if (index < dataOrder.paket.length) {
+    let elem = dataOrder.paket[index];
+    let pages = SFR(".invContainer").children();
+    pages[0]
+      .children()[0]
+      .children()[0]
+      .children()[2]
+      .children()[0]
+      .children()[0]
+      .children()[0]
+      .children()[1].append(`
+            <tr>
+                <td>
+                    <h6 class="mb-0"> ${elem.bundle} <br/>  ${filterAin(elem.nama)} - ${
+      filterAin(elem.sekolah)
+    }  <br/> ${elem.judul} - ${elem.bidang_studi} - ${elem.medali}</h6>
+                    <p>${jabarkan(elem.item)}</p>
+                </td>
+                <td style="width:150px">Rp. ${formatMoney(elem.harga)}</td>
+                <td style="width:120px">${elem.jumlah}</td>
+                <td class="text-end" style="width:150px">Rp. ${formatMoney(
+                  (elem.harga * elem.jumlah).toString()
+                )}</td>
+            </tr>`);
+    total += elem.jumlah * parseInt(elem.harga);
+    numOrder += elem.jumlah;
+    capturePages(index, dataOrder, "paket", resp2);
+  } else {
+    resp2(true);
+  }
+}
+
+function renderInvOngkos(dataOrder, resp3 = () => {}) {
+  if (dataOrder.shipper.tarif != 0 && dataOrder.shipper.weight != 0) {
+    let elem = dataOrder.shipper;
+    let pages = SFR(".invContainer").children();
+    pages[0]
+      .children()[0]
+      .children()[0]
+      .children()[2]
+      .children()[0]
+      .children()[0]
+      .children()[0]
+      .children()[1].append(`
+            <tr>
+                <td>
+                    <h6 class="mb-0"> ONGKOS KIRIM  (${(dataOrder.shipper.exped==undefined?'JnT Express ':dataOrder.shipper.exped)} ${(dataOrder.shipper.layanan==undefined?'Reg Ez':dataOrder.shipper.layanan)})<br/>${
+                      filterAin(dataOrder.shipper.penerima)
+                    } / ${dataOrder.shipper.kontak} <br/>
+                    ${dataOrder.shipper.provinsi} -  ${
+      dataOrder.shipper.kabupaten
+    } -  ${dataOrder.shipper.kecamatan}</h6>
+                    <p>${filterAin(dataOrder.shipper.detail)}</p>
+                </td>
+                <td style="width:150px">Rp. ${(dataOrder.shipper.weight==undefined? formatMoney(
+                    dataOrder.shipper.ongkos
+                  ) + ' / old app':formatMoney(
+                  dataOrder.shipper.ongkos
+                ) + '/' + dataOrder.shipper.weight + 'kg')}</td>
+                <td>${(dataOrder.shipper.weight==undefined?'old app ':dataOrder.shipper.weight)}kg</td>
+                <td class="text-end" style="width:150px">Rp. ${formatMoney(
+                  dataOrder.shipper.ongkos
+                )}</td>
+            </tr>`);
+    total += parseInt(dataOrder.shipper.ongkos);
+    capturePages(0, dataOrder, "shipper", resp3);
+  } else {
+    resp3(true);
+  }
+}
+
+function renderInvTotal(dataOrder,ku,so, resp4 = () => {}) {
+  let pages = SFR(".invContainer").children();
+  let disc = ((so)? (numOrder>=dataOrder.cuttingpoin.min?((parseInt(total) - parseInt(dataOrder.shipper.ongkos)) * dataOrder.cuttingpoin.dis):0):0);
+  pages[0]
+    .children()[0]
+    .children()[0]
+    .children()[2]
+    .children()[0]
+    .children()[0]
+    .children()[0]
+    .children()[1].append(`
+            <tr>
+                <td></td>
+                <td></td>
+                <td>
+                <h6 class="mb-0">Total:</h6>
+                </td>
+                <td class="text-end">Rp. ${formatMoney(total)}</td>
+            </tr>
+            <tr>
+                
+                <td></td>
+                <td></td>
+                <td>
+                <h6 class="mb-0">Kode Unik:</h6>
+                </td>
+                <td class="text-end">Rp. ${formatMoney(
+                  ku
+                )}</td>
+            </tr>
+            <tr>
+                
+                <td></td>
+                <td></td>
+                <td>
+                <h6 class="mb-0">Discount:</h6>
+                </td>
+                <td class="text-end">- Rp. ${formatMoney(disc)}</td>
+            </tr>
+            <tr>
+                <td>
+                <h5 class="mb-0"><b style="color:#047408">Net Amount</b></h5>
+                </td>
+                <td></td>
+                <td></td>
+            
+                <td class="text-end"><b style="color:#047408">Rp. ${formatMoney(
+                  (
+                    parseInt(total) +
+                    parseInt(ku) -
+                    parseInt(disc)
+                  ).toString()
+                )}</b></td>
+            </tr> `);
+
+        pages[0]
+          .children()[0].children()[0].append(`<div class="row">
+          <div class="col-sm-12">
+              <p class="mb-0 mt-4 himbauan">
+                <b>NOTE:</b> </br/>1. Mohon transfer sebelum tanggal jatuh tempo. <br/>
+                2. Pastikan nominal transfer sesuai yang tertera pada Net Amount (Jumlah Tagihan) pada invoice ini.<br/>
+                3. Dilarang keras mengarang kode unik. Jika lupa nominal tranfer dan berniat membulatkan nominal. Mohon bulatkan di kelipatan seribu. lalu upload bukti transfer melalui fasilitas yang disediakan<br/>
+                4. Jika transfer anda tidak terkonfirmasi dalam 1 x 24 jam. Mohon segera hub Tim Service kami. Terima Kasih<br/>
+              </p>  
+          </div>
+      </div>`);
+
+  capturePages(0, dataOrder, "total", resp4);
+}
+
+function capturePages(index, dataOrder, kontext, resp) {
+  let pages = SFR(".invContainer").children();
+  if (pages[0].children()[0].height() > 1200) {
+    capturePages0((ready) => {
+      if (ready) {
+        index++;
+        if (kontext == "pendaftaran") {
+          renderInvPendaftaran(index, dataOrder, resp);
+        } else if (kontext == "paket") {
+          renderInvPaket(index, dataOrder, resp);
+        } else if (kontext == "shipper") {
+          resp(true);
+        } else if (kontext == "total") {
+          resp(true);
+        }
+      }
+    });
+  } else {
+    index++;
+    if (kontext == "pendaftaran") {
+      renderInvPendaftaran(index, dataOrder, resp);
+    } else if (kontext == "paket") {
+      renderInvPaket(index, dataOrder, resp);
+    } else if (kontext == "shipper") {
+      resp(true);
+    } else if (kontext == "total") {
+      capturePages0((ready) => {
+        if (ready) {
+          resp(true);
+        }
+      });
+    }
+  }
+}
+
+function capturePages0(cb) {
+  html2canvas(SFR(".invContainer").children()[0][0], {
+    scrollX: -window.scrollX,
+    scrollY: -window.scrollY,
+    windowWidth: document.documentElement.offsetWidth,
+    windowHeight: document.documentElement.offsetHeight,
+  }).then(function (canvas) {
+    let getCanvas = canvas;
+    let imageData = getCanvas.toDataURL("image/png");
+    SFR(".contentAsset ").append(`<img src="${imageData}" class="imginv"/>`);
+    setTimeout(() => {
+      SFR(".invContainer")
+        .children()[0]
+        .html(
+          `
+                <div class="card rounded domrender">
+                    <div class="card-body">
+                        <div class="row">
+                        </div>
+                        <div class="row">
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12 mt-4">
+                                <div class="table-responsive-lg">
+                                    <table class="table billing">
+                                    <thead>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                    </table>
+                                </div>
+                            </div>                              
+                        </div>
+                   
+                    </div>
+                </div>`
+        )
+        .delay(50, (dom) => {
+          cb(true);
+        });
+    }, 300);
+    // // Now browser starts downloading it instead of just showing it
+    // var newData = imgageData.replace(/^data:image\/png/, "data:application/octet-stream");
+    // $('.btnunduhinv').attr("download", "invoice.jpg").attr("href", newData);
+  });
+}
+
+

@@ -1,0 +1,933 @@
+var riwayatData = [];
+
+SFR(document).ready(function () {
+    SFR(".form1 .formbody").on("click", ".cdrankriwayat", function () {
+        let meta = SFR(this).getAttr('meta').split('-'),
+            focusData = riwayatData.data[meta[0]],
+            focusBidang = focusData.item[meta[1]],
+            posm = meta[2],
+            indexKe = meta[3];
+        if(focusData.po == 1){
+            if(profiles.posm == posm){
+                
+                showload();
+                getData('cart',{
+                    token:getCookie('token'),
+                    order:'getpaket',
+                    posp:rankSorot[indexKe].pos,
+                    pose:rankSorot[indexKe].pose,
+                    medal:rankSorot[indexKe].medali
+                }, function(resp){
+                    let form = SFR('.mainform').children();
+                    form[0].css({
+                        'left': - SFR('.mainform').width() + 'px',
+                    });
+                    let disp = ``;
+                    resp.data.forEach((element, idx)=>{
+                        disp += `<div class="card-info z-depth-9">
+                                    <div class="banner-info">
+                                        <img src="${element.banner}" class="banner-produk">
+                                    </div>
+                                    <div class="ket-info">
+                                        <div class="ket">
+                                            ${element.bundle}
+                                        </div>
+                                        <div class="rincian">
+                                        ${jabarkan(element.item)}
+                                        </div>
+                                    </div>
+                                    ${((cekExistBundelPaket(posm, element.bundle, rankSorot[indexKe].pose, rankSorot[indexKe].posk)[0])?`
+                                    <div class="harga added z-depth-3 addtocart" meta="${idx}">
+                                            <div class="btnorder">
+                                                added
+                                            </div>
+                                    </div>`:`<div class="harga z-depth-3 addtocart" meta="${idx}">
+                                        <div class="btnorder">
+                                            Rp. ${formatMoney(element.harga)}
+                                        </div>
+                                    </div>`)}
+                                </div>`;
+                    });
+                    form[1].css({
+                        'left':'0px'
+                    }).children()[1].html(disp)
+                    .parent().children()[0].children()[1].children()[0].html(filterAin(rankSorot[indexKe].nama))
+                    .parent().children()[1].html(`Merchandise ${focusData.judul}`)
+                    .parent().parent().parent().children()[2].html(``);
+                    let btnOpenCart = new CreateButton(form[1].children()[2],'Buka Keranjang', 'btn-warning');
+                    btnOpenCart.append();
+                    btnOpenCart.getButton().on('click', function(){
+                        let cartCondition = {
+                            left : SFR('#cartbutton').children()[1].offset().left,
+                            top: SFR('#cartbutton').children()[1].offset().top - window.pageYOffset,
+                            width : SFR('#cartbutton').children()[1].width(),
+                            height :SFR('#cartbutton').children()[1].height()
+                        };
+                        send2Cart(cartCondition);
+                        setTimeout(()=>{
+                            SFR('#cartbutton').click();
+                        }, 1000);
+                    })
+                    hideload();
+
+                    SFR('.addtocart').on('click', function(){
+                        let indexResp = SFR(this).getAttr('meta');
+                        let palang = cekExistBundelPaket(posm, resp.data[indexResp].bundle, rankSorot[indexKe].pose, rankSorot[indexKe].posk);
+                        if(palang[0]){
+                            myCart.paket.splice(palang[1], 1);
+                            SFR(this).removeClass('added').children()[0].html(`Rp. ${formatMoney(resp.data[indexResp].harga)}`)
+                        }
+                        else{
+                            myCart.paket.push({
+                                "memberId": meta[2],
+                                "posp": rankSorot[indexKe].pos,
+                                "posk": rankSorot[indexKe].posk,
+                                "pose": rankSorot[indexKe].pose,
+                                "posm": rankSorot[indexKe].posm,
+                                "nama": rankSorot[indexKe].nama,
+                                "prov": rankSorot[indexKe].prov,
+                                "kab": rankSorot[indexKe].kab,
+                                "subjek": rankSorot[indexKe].subjek,
+                                "jenjang": rankSorot[indexKe].jenjang,
+                                "judul": focusData.judul,
+                                "bidang_studi": focusBidang.bidang_studi,
+                                "medali": rankSorot[indexKe].medali,
+                                "sekolah": rankSorot[indexKe].sekolah,
+                                "bundle": resp.data[indexResp].bundle,
+                                "item": resp.data[indexResp].item,
+                                "harga": resp.data[indexResp].harga,
+                                "jumlah": 1
+                            });
+                            SFR(this).addClass('added').children()[0].html('added')
+                            // tambah koleksi kart
+                        } 
+                    });
+                    SFR('.banner-produk').on('click', function(){
+                        getNormalizePreviewOnForm(this.src, resp =>{
+                            let mag = new Magnimage(SFR(this), this.src, resp)
+                            mag.showUp();
+                        })
+                    })
+                })
+            }
+            else{
+                let form = SFR('.mainform').children();
+                form[0].css({
+                    'left': - SFR('.mainform').width() + 'px',
+                });
+                form[1].css({
+                    'left':'0px'
+                }).children()[1].html(`<p>Anda memilih kartu pengumuman yang bukan nama anda. Apakah anda yakin lanjut memesankan orang lain?</p>`)
+                .parent().children()[0].children()[1].children()[0].html('Form Konfirmasi')
+                .parent().children()[1].html(`Message Alert`)
+                .parent().parent().parent().parent().css({
+                    'height':'200px',
+                    'margin-top':'-100px',
+                    'top': "50%"
+                }).children()[1].children()[2].html('');
+
+                let buttonnext = new CreateButton(SFR('.form2 .formfooter'), 'Next', 'btn-success');
+                buttonnext.append();
+                buttonnext.getButton().on('click', function(){
+                    form.forEach((frm, idx)=>{
+                        if(idx < 2){
+                            frm.css({
+                                'left': - SFR('.mainform').width() + 'px',
+                            });
+                        }
+                        else{
+                            showload();
+                            getData('cart',{
+                                token:getCookie('token'),
+                                order:'getpaket',
+                                posp:rankSorot[indexKe].pos,
+                                pose:rankSorot[indexKe].pose,
+                                medal:rankSorot[indexKe].medali
+                            }, function(resp){
+                                hideload();
+                                frm.parent().css({
+                                    width: getTypeDisplay() == "laptop" ? "500px" : "100%",
+                                    height: getTypeDisplay() == "laptop" ? "600px" : "100%",
+                                    left: getTypeDisplay() == "laptop" ? "50%" : "0",
+                                    top: getTypeDisplay() == "laptop" ? "50%" : "0",
+                                    "border-radius": "10px",
+                                    "margin-left": getTypeDisplay() == "laptop" ? "-250px" : "0",
+                                    "margin-top": getTypeDisplay() == "laptop" ? "-300px" : "0",
+                                });
+                                let disp = ``;
+                                resp.data.forEach((element, idx)=>{
+                                    disp += `<div class="card-info z-depth-9">
+                                                <div class="banner-info">
+                                                    <img src="${element.banner}" class="banner-produk">
+                                                </div>
+                                                <div class="ket-info">
+                                                    <div class="ket">
+                                                        ${element.bundle}
+                                                    </div>
+                                                    <div class="rincian">
+                                                    ${jabarkan(element.item)}
+                                                    </div>
+                                                </div>
+                                                ${((cekExistBundelPaket(rankSorot[indexKe].posm, element.bundle,rankSorot[indexKe].pose, rankSorot[indexKe].posk)[0])?`
+                                                <div class="harga added z-depth-3 addtocart" meta="${idx}">
+                                                    <div class="btnorder">
+                                                        added
+                                                    </div>
+                                                </div>`:`<div class="harga z-depth-3 addtocart" meta="${idx}">
+                                                    <div class="btnorder">
+                                                        Rp. ${formatMoney(element.harga)}
+                                                    </div>
+                                                </div>`)}
+                                            </div>`;
+                                });
+
+                                
+                                frm.css({
+                                    'left':0
+                                }).children()[1].html(disp).parent()
+                                .children()[0].children()[1].children()[0].html(filterAin(rankSorot[indexKe].nama))
+                                .parent().children()[1].html(`Merchandise ${focusData.judul}`)
+                                .parent().parent().parent().children()[2].html(``);
+                                let btnOpenCart = new CreateButton(frm.children()[2],'Buka Keranjang', 'btn-warning');
+                                btnOpenCart.append();
+                                btnOpenCart.getButton().on('click', function(){
+                                    let cartCondition = {
+                                        left : SFR('#cartbutton').children()[1].offset().left,
+                                        top: SFR('#cartbutton').children()[1].offset().top - window.pageYOffset,
+                                        width : SFR('#cartbutton').children()[1].width(),
+                                        height :SFR('#cartbutton').children()[1].height()
+                                    };
+                                    send2Cart(cartCondition);
+                                    setTimeout(()=>{
+                                        SFR('#cartbutton').click();
+                                    }, 1000);
+                                });
+                                
+
+                                SFR('.addtocart').on('click', function(){
+                                    let indexResp = SFR(this).getAttr('meta');
+                                    let palang = cekExistBundelPaket(rankSorot[indexKe].posm, resp.data[indexResp].bundle, rankSorot[indexKe].pose, rankSorot[indexKe].posk);
+                                    if(palang[0]){
+                                        myCart.paket.splice(palang[1], 1);
+                                        SFR(this).removeClass('added').children()[0].html(`Rp. ${formatMoney(resp.data[indexResp].harga)}`)
+                                    }
+                                    else{
+                                        myCart.paket.push({
+                                            "memberId": meta[2],
+                                            "posp": rankSorot[indexKe].pos,
+                                            "posk": rankSorot[indexKe].posk,
+                                            "pose": rankSorot[indexKe].pose,
+                                            "posm": rankSorot[indexKe].posm,
+                                            "nama": rankSorot[indexKe].nama,
+                                            "prov": rankSorot[indexKe].prov,
+                                            "kab": rankSorot[indexKe].kab,
+                                            "subjek": rankSorot[indexKe].subjek,
+                                            "jenjang": rankSorot[indexKe].jenjang,
+                                            "judul": focusData.judul,
+                                            "bidang_studi": focusBidang.bidang_studi,
+                                            "medali": rankSorot[indexKe].medali,
+                                            "sekolah": rankSorot[indexKe].sekolah,
+                                            "bundle": resp.data[indexResp].bundle,
+                                            "item": resp.data[indexResp].item,
+                                            "harga": resp.data[indexResp].harga,
+                                            "jumlah": 1
+                                        });
+                                        SFR(this).addClass('added').children()[0].html('added')
+                                        // tambah koleksi kart
+                                    }
+                                });
+                                SFR('.banner-produk').on('click', function(){
+                                    getNormalizePreviewOnForm(this.src, resp =>{
+                                        let mag = new Magnimage(SFR(this), this.src, resp)
+                                        mag.showUp();
+                                    })
+                                })
+                            })
+                        }
+                    })
+                    
+                })
+
+                let buttonbatal = new CreateButton(SFR('.form2 .formfooter'), 'Batal', 'btn-danger');
+                buttonbatal.append();
+
+                buttonbatal.getButton().on('click', function(){
+                    SFR(".form2 .posback").click();
+                })
+            }
+        }  
+        else{
+            showToast('masa Open Claim telah berakhir', 'error');
+        }
+    });
+});
+
+function dispRiwayat(){
+   let key = base64_encode('riwayat');
+   if(getStorage(key) != null && getJarakWaktu(gettoday(), JSON.parse(repair(getStorage(key), key)).date, "Detik") > 0){
+        riwayatData = JSON.parse(repair(getStorage(key), key));
+        showload();
+        setTimeout(() => {
+            renderRiwayat();
+            hideload();
+        }, 400);
+   }
+   else{
+      showload();
+      getData(
+         "riwayat",
+         {
+           token: getCookie("token"),
+           order: "riwayat",
+           tdy: gettoday()
+         },
+         (resp) => {
+           if (resp.response == "success") {
+             setStorage(key, shake(JSON.stringify(resp.data), key));
+             riwayatData = resp.data;
+             renderRiwayat();
+           }
+           hideload();
+         }
+       );
+   }
+}
+
+function renderRiwayat(){
+   SFR(".stage1, .stage2, .stage3").hide();
+   dispHistory();
+}
+
+function dispHistory(){
+   if(riwayatData.data.length > 0){
+      SFR(".maindisp .stage1").show();
+      SFR(".maindisp .stage1").html(`
+      <div class="d-flex justify-content-between align-items-center flex-wrap mb-5 mt-100 gap-3">
+                  <div class="d-flex flex-column">
+                      <div class="flex justify-content-start">
+                          <svg width="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path stroke="currentColor" d="M5.52786 16.7023C6.6602 18.2608 8.3169 19.3584 10.1936 19.7934C12.0703 20.2284 14.0409 19.9716 15.7434 19.0701C17.446 18.1687 18.766 16.6832 19.4611 14.8865C20.1562 13.0898 20.1796 11.1027 19.527 9.29011C18.8745 7.47756 17.5898 5.96135 15.909 5.02005C14.2282 4.07875 12.2641 3.77558 10.3777 4.16623C8.49129 4.55689 6.80919 5.61514 5.64045 7.14656C4.47171 8.67797 3.89482 10.5797 4.01579 12.5023M4.01579 12.5023L2.51579 11.0023M4.01579 12.5023L5.51579 11.0023" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                              <path fill="currentColor" d="M12 8V12L15 15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                          </svg>
+                          <span>Riwayat</span>
+                      </div>
+                  </div>
+      </div>
+      <div class="row"></div>`);
+      let riwayatBidang = ``;
+      riwayatData.data.forEach((elem, index) => {
+           let border = ['primary', 'success ','danger','warning'];
+           let bidangSt = ``;
+           let subjekBidang = ``;
+           let medal = ['Emas', 'Perak', 'Perunggu'];
+           let finalis = ['Finalis'];
+           elem.item.forEach((item, idx)=>{
+              if(getStorage(item.obeng)!= null){
+                  let kandit = JSON.parse(getStorage(item.obeng));
+                  if(kandit.status == 'belum'){
+                        if(kandit.data.length > 0){
+                            initRiwayat(JSON.stringify(kandit.data), item.obeng, item.posk);
+                        }
+                        else{
+                            if(getJarakWaktu(gettoday(),kandit.tanggal, 'Hari') < -10){
+                                removeStorage(item.obeng);
+                            }
+                        }
+                  }
+                  else{
+                     if(getJarakWaktu(gettoday(),kandit.tanggal, 'Hari') < -10){
+                         removeStorage(item.obeng);
+                     }
+                  }
+              }
+              if(getStorage(item.mur) != null){
+                  removeStorage(item.mur);
+              }
+               subjekBidang = `${jabarkan(item.subjek)} - ${jabarkan(item.jenjang)}`;
+               bidangSt +=` <li>
+                              <div class="timeline-dots1 border-${border[(idx%border.length)]} text-${border[(idx%border.length)]}">
+                                 <svg class="icon-20" width="20" viewBox="0 0 24 24">
+                                    <path fill="currentColor" d="M17.5 14.33C18.29 14.33 19.13 14.41 20 14.57V16.07C19.38 15.91 18.54 15.83 17.5 15.83C15.6 15.83 14.11 16.16 13 16.82V15.13C14.17 14.6 15.67 14.33 17.5 14.33M13 12.46C14.29 11.93 15.79 11.67 17.5 11.67C18.29 11.67 19.13 11.74 20 11.9V13.4C19.38 13.24 18.54 13.16 17.5 13.16C15.6 13.16 14.11 13.5 13 14.15M17.5 10.5C15.6 10.5 14.11 10.82 13 11.5V9.84C14.23 9.28 15.73 9 17.5 9C18.29 9 19.13 9.08 20 9.23V10.78C19.26 10.59 18.41 10.5 17.5 10.5M21 18.5V7C19.96 6.67 18.79 6.5 17.5 6.5C15.45 6.5 13.62 7 12 8V19.5C13.62 18.5 15.45 18 17.5 18C18.69 18 19.86 18.16 21 18.5M17.5 4.5C19.85 4.5 21.69 5 23 6V20.56C23 20.68 22.95 20.8 22.84 20.91C22.73 21 22.61 21.08 22.5 21.08C22.39 21.08 22.31 21.06 22.25 21.03C20.97 20.34 19.38 20 17.5 20C15.45 20 13.62 20.5 12 21.5C10.66 20.5 8.83 20 6.5 20C4.84 20 3.25 20.36 1.75 21.07C1.72 21.08 1.68 21.08 1.63 21.1C1.59 21.11 1.55 21.12 1.5 21.12C1.39 21.12 1.27 21.08 1.16 21C1.05 20.89 1 20.78 1 20.65V6C2.34 5 4.18 4.5 6.5 4.5C8.83 4.5 10.66 5 12 6C13.34 5 15.17 4.5 17.5 4.5Z"></path>
+                                 </svg>
+                              </div>
+                              <h5 class="float-left mb-1">${item.bidang_studi}</h5>
+                              <div class="d-inline-block w-100">
+                                 <p>${(item.pub == 0 ? 'Sedang proses penilaian': (!in_array(medal, item.medal)?(!in_array(finalis, item,medal)?(item.exist ==0?'Sebagai Peserta Aktif':'Sebagai Peserta Aktif'):'Sebagai Finalis'):'Sebagai Peraih Medali '+ item.medal))}</p>
+                                 <div class="assetButtonContainer mt-2">
+                                    <svg class="icon" meta="Pengumuman-${index}-${idx}" width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                       <path d="M2 10V14C2 16 3 17 5 17H6.43C6.8 17 7.17 17.11 7.49 17.3L10.41 19.13C12.93 20.71 15 19.56 15 16.59V7.41003C15 4.43003 12.93 3.29003 10.41 4.87003L7.49 6.70003C7.17 6.89003 6.8 7.00003 6.43 7.00003H5C3 7.00003 2 8.00003 2 10Z" stroke="currentColor" stroke-width="1.5"/>
+                                       <path d="M18 8C19.78 10.37 19.78 13.63 18 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                       <path d="M19.83 5.5C22.72 9.35 22.72 14.65 19.83 18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    <svg class="icon" meta="Cert-${index}-${idx}" width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                       <path d="M9 22H15C20 22 22 20 22 15V9C22 4 20 2 15 2H9C4 2 2 4 2 9V15C2 20 4 22 9 22Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                       <path d="M15.75 9H8.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                       <path d="M15.75 15H8.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    <svg class="icon" meta="Piag-${index}-${idx}" width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                       <path d="M21 7V17C21 20 19.5 22 16 22H8C4.5 22 3 20 3 17V7C3 4 4.5 2 8 2H16C19.5 2 21 4 21 7Z" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+                                       <path d="M14.5 4.5V6.5C14.5 7.6 15.4 8.5 16.5 8.5H18.5" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+                                       <path d="M8 13H12" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+                                       <path d="M8 17H16" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    <svg class="icon" meta="Pembahasan-${index}-${idx}" width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                       <path d="M22 16.7399V4.66994C22 3.46994 21.02 2.57994 19.83 2.67994H19.77C17.67 2.85994 14.48 3.92994 12.7 5.04994L12.53 5.15994C12.24 5.33994 11.76 5.33994 11.47 5.15994L11.22 5.00994C9.44 3.89994 6.26 2.83994 4.16 2.66994C2.97 2.56994 2 3.46994 2 4.65994V16.7399C2 17.6999 2.78 18.5999 3.74 18.7199L4.03 18.7599C6.2 19.0499 9.55 20.1499 11.47 21.1999L11.51 21.2199C11.78 21.3699 12.21 21.3699 12.47 21.2199C14.39 20.1599 17.75 19.0499 19.93 18.7599L20.26 18.7199C21.22 18.5999 22 17.6999 22 16.7399Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                       <path d="M12 5.48999V20.49" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                       <path d="M7.75 8.48999H5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                       <path d="M8.5 11.49H5.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    <svg class="icon" meta="Chat-${index}-${idx}" width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M2 8.5C2 5 4 3.5 7 3.5H17C20 3.5 22 5 22 8.5V15.5C22 19 20 20.5 17 20.5H7" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M17 9L13.87 11.5C12.84 12.32 11.15 12.32 10.12 11.5L7 9" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M2 16.5H8" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+                                        <path d="M2 12.5H5" stroke="currentColor" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    ${thatImPerlu(item.obeng)}
+                                 </div>
+                              </div>
+                           </li>`;
+           })
+           riwayatBidang +=`<div class="col-lg-4" style="user-select:none;">
+           <div class="card z-depth-9">
+              <div class="card-header d-flex justify-content-between">
+                 <div class="header-title">
+                    <h4 class="card-title">${elem.judul} ${(elem.reg_type == 'Gratis'? '': '- <span class="goldvip">pendaftar VIP</span>')} <br/> <small>${subjekBidang}</small></h4>
+                 </div>
+              </div>
+              <div class="card-body">
+                 <div class="iq-timeline0 m-0 d-flex align-items-center justify-content-between position-relative">
+                    <ul class="list-inline p-0 m-0">
+                        ${bidangSt}
+                    </ul>
+                 </div>
+              </div>
+           </div>
+        </div>`;
+      });
+      SFR(".maindisp .stage1 .row").html(riwayatBidang);
+
+      SFR('.assetButtonContainer').on("click",'.icon', function () {
+          let meta = SFR(this).getAttr('meta').split('-');
+          kiri = SFR(this).children()[0].offset().left;
+          atas = SFR(this).children()[0].offset().top - window.pageYOffset;
+          lebar = SFR(this).children()[0].width();
+          tinggi = SFR(this).children()[0].height();
+          let focusData = riwayatData.data[meta[1]],
+              focusBidang = focusData.item[meta[2]];
+
+          switch(meta[0]){
+            case 'Pengumuman':
+               if(focusBidang.pub == 1){
+                  showload();
+                  getfile(focusBidang.posk, (resp)=>{
+                     hideload();
+                     renderRankRiwayat(resp, meta[1], meta[2]);
+                  });
+               }
+               else{
+                  showToast('Pengumuman belum bisa diakses','error');
+               }
+               break;
+            case 'Pembahasan':
+                if(in_array(focusBidang.aset, meta[0])){
+                    showload();
+                    getData('riwayat',{
+                        order: 'getpemb',
+                        token : getCookie('token'),
+                        posp : focusBidang.posp,
+                        bund : focusBidang.bundle
+                    }, function(resp){
+                          if(resp.data.status == 'success'){
+                            openPemb(resp.data.data, focusBidang.bidang_studi + ' - ' + focusData.judul);
+                          }
+                          else{
+                            showToast(resp.data.message, resp.data.status)
+                          }
+                          hideload();
+                    })
+                }
+                else{
+                   // not exist every one can buy
+                   openPenawaran(focusData, focusBidang, 'Pembahasan');
+                }
+                break;
+            case 'Cert':
+                if(in_array(focusBidang.aset, base64_decode('U2VydGlmaWthdCBEaWdpdGFs'))){
+                    showload();
+                    getcert('cert','cert'+focusData.pos, (template)=>{
+                        setTimeout(() => {
+                            getData('riwayat',{
+                                order: 'getdatacert',
+                                token: getCookie('token'),
+                                folder: 'cert',
+                                pos: focusData.pos,
+                                posp: focusBidang.posp,
+                            }, function(resp){
+                                if(resp.response == 'success'){
+                                    if(resp.data.status == 'success'){
+                                        template.norut.label = resp.data.message.norut;
+                                        template.nama.label = resp.data.message.nama;
+                                        template.sekolah.label = resp.data.message.sekolah;
+                                        template.provinsi.label = resp.data.message.provinsi;
+                                        template.kabupaten.label = resp.data.message.kabupaten;
+                                        template.bidang.label = resp.data.message.bidang;
+                                        template.jenjang.label = resp.data.message.jenjang;
+                                        template.tingkat.label = resp.data.message.tingkat;
+                                        template.medalis.label = resp.data.message.medalis;
+                                        template.predikat.label = resp.data.message.predikat;
+                                        template.barcode.color = resp.data.message.barcode;
+                                        openCert(template, focusBidang.bidang_studi + ' - ' + focusData.judul);
+                                    }
+                                    else{
+                                        showToast(resp.data.message, resp.data.status)
+                                    }
+                                }
+                                hideload();
+                            })
+                        }, 3000);
+                    });
+                }
+                else{
+                    openPenawaran(focusData, focusBidang, 'Sertifikat');
+                }
+                break;
+            case 'Piag':
+                if(in_array(focusBidang.aset, base64_decode('UGlhZ2FtIERpZ2l0YWw='))){
+                    showload();
+                    getcert('piag','piag'+focusData.pos, (template)=>{
+                        setTimeout(() => {
+                            getData('riwayat',{
+                                order: 'getdatacert',
+                                token: getCookie('token'),
+                                folder: 'piag',
+                                pos: focusData.pos,
+                                posp: focusBidang.posp,
+                            }, function(resp){
+                                if(resp.response == 'success'){
+                                    if(resp.data.status == 'success'){
+                                        template.norut.label = resp.data.message.norut;
+                                        template.nama.label = resp.data.message.nama;
+                                        template.sekolah.label = resp.data.message.sekolah;
+                                        template.provinsi.label = resp.data.message.provinsi;
+                                        template.kabupaten.label = resp.data.message.kabupaten;
+                                        template.bidang.label = resp.data.message.bidang;
+                                        template.jenjang.label = (focusData.pos == 57? (resp.data.message.jenjang == 'SMA, MA dan SMK'? 'Senior High School': (  resp.data.message.jenjang == 'SMP dan MTs'? 'Junior High Scholl':'Elementary school')):resp.data.message.jenjang);
+                                        template.tingkat.label = resp.data.message.tingkat;
+                                        template.medalis.label = (focusData.pos == 57? (resp.data.message.medalis == 'Peraih Medali Emas'? 'Gold Medalist': (  resp.data.message.medalis == 'Peraih Medali Perak'? 'Silver Medalist':'Bronze Medalist')):resp.data.message.medalis);
+                                        template.predikat.label = resp.data.message.predikat;
+                                        template.barcode.color = resp.data.message.barcode;
+                                        openPiag(template, focusBidang.bidang_studi + ' - ' + focusData.judul);
+                                    }
+                                    else{
+                                        showToast(resp.data.message, resp.data.status)
+                                    }
+                                }
+                                hideload();
+                            })
+                        }, 3000);
+                    });
+                }
+                else{
+                    openPenawaran(focusData, focusBidang, 'Piagam');
+                }
+                break;
+            case 'Chat':
+                window.open(focusBidang.chat_group, '');
+                break;
+          }
+             
+      });
+
+   } else{
+        SFR(".maindisp .stage1").html(``);
+        SFR(".maindisp .stage1").hide();
+   }
+}
+
+function renderRankRiwayat(rank, posRiwayatData, posHisItem){
+   rankSorot = rank;
+   SFR(".overlayForm")
+   .css({
+     display: "block",
+   }).delay(10, dom=>{
+       hideScrollBody();
+       SFR(".mainform")
+       .css({
+           display: "block",
+           width: getTypeDisplay() == "laptop" ? "500px" : "100%",
+           height: getTypeDisplay() == "laptop" ? "600px" : "100%",
+           left: getTypeDisplay() == "laptop" ? "50%" : "0",
+           top: getTypeDisplay() == "laptop" ? "50%" : "0",
+           "border-radius": "10px",
+           "margin-left": getTypeDisplay() == "laptop" ? "-250px" : "0",
+           "margin-top": getTypeDisplay() == "laptop" ? "-300px" : "0",
+       }).delay(100, dom =>{
+           dom.children().forEach((item, ind) => {
+               item.children()[1].html("");
+               if (ind > 0) {
+                 item.css({
+                   left: dom.width() + "px",
+                 });
+               } else {
+                   SFR('.tema .namesrc').css({'display':'flex'});
+                   let judul =  riwayatData.data[posRiwayatData].judul + ' ' + riwayatData.data[posRiwayatData].item[posHisItem].bidang_studi, 
+                       kategori = `${jabarkan(riwayatData.data[posRiwayatData].item[posHisItem].subjek)} - ${jabarkan(riwayatData.data[posRiwayatData].item[posHisItem].jenjang)}`, disp ='';
+                   
+
+                   rank.forEach((element, indexke)=>{
+                       disp +=`<div class="card-info z-depth-9 cdrankriwayat" id="posm${element.posm}" meta="${posRiwayatData}-${posHisItem}-${element.posm}-${indexke}">
+                                   <div class="banner-info">
+                                       <img src="assets/images/icons/${(element.medali==''?'07':element.medali)}.png">
+                                   </div>
+                                   <div class="ket-info">
+                                       <div class="ket" ${element.posm == profiles.posm? 'style="color:sandybrown;"':''}>
+                                           ${filterAin(element.nama)}
+                                       </div>
+                                       <div class="status">
+                                           ${element.prov} - ${filterAin(element.sekolah)}
+                                       </div>
+                                       <div class="medal">
+                                           ${(element.medali == ''?'Peserta Aktif':`Peraih Medali ${element.medali}`)}
+                                       </div>
+                                   </div>
+                                   <div class="info  z-depth-3">
+                                       ${element.nilai}
+                                   </div>
+                               </div>`;
+                   });
+
+                   item.css({
+                       left: "0px",
+                       })
+                       .children()[0]
+                       .children()[1]
+                       .children()[0]
+                       .html(judul)
+                       .parent()
+                       .children()[1]
+                       .html(kategori)
+                       .parent().parent().parent().children()[1].html(disp);
+                   if(SFR('#posm'+profiles.posm).length>0){
+                       setTimeout(()=>{
+                           SFR('.form1 .formbody').animateScrollTo(SFR('#posm'+profiles.posm), 300);
+                       }, 500);
+                   }
+               }
+             });
+       })
+   });
+}
+
+function openPenawaran(data, bidang, kontext){
+    if(data.po == 0 && getJarakWaktu(gettoday(), bidang.akhir, 'Hari') < -10){
+        switch(kontext){
+            case 'Pembahasan':
+                let cekExistPemp = cekExistBundelPaket(profiles.posm, 'Soal dan Pembahasan', data.pos, bidang.posk);
+                if(!cekExistPemp[0]){
+                    SFR(".overlayForm")
+                    .css({
+                    display: "block",
+                    }).delay(10, dom=>{
+                        hideScrollBody();
+                        SFR(".mainform")
+                        .css({
+                            display: "block",
+                            width: getTypeDisplay() == "laptop" ? "500px" : "100%",
+                            height: '250px',
+                            left: getTypeDisplay() == "laptop" ? "50%" : "0",
+                            top: "50%",
+                            "border-radius": "10px",
+                            "margin-left": getTypeDisplay() == "laptop" ? "-250px" : "0",
+                            "margin-top": "-125px",
+                        }).delay(100, dom =>{
+                            dom.children().forEach((item, ind) => {
+                                item.children()[1].html("");
+                                if (ind > 0) {
+                                    item.css({
+                                        left: dom.width() + "px",
+                                    });
+                                } else {
+                                    SFR('.tema .namesrc').css({'display':'none'});
+                                    item.css({
+                                        left: "0px",
+                                        })
+                                        .children()[0]
+                                        .children()[1]
+                                        .children()[0]
+                                        .html('Form Konfirmasi')
+                                        .parent()
+                                        .children()[1]
+                                        .html('Message Alert')
+                                        .parent().parent().parent().children()[1].html('<p>Anda tidak memiliki akses ke Soal dan Pembahasan. Apakah anda ingin meminta akses ke Soal dan Pembahasan? Jika <b>YA</b> tekan tombol <b>Tambah Keranjang</b> di bawah ini. Biaya pembukaan akses ke Soal dan Pembahasan setelah masa Open Claim berakhir dikenakan Rp. 55.000.</p>')
+                                        .parent().children()[2].html('');
+                                        let tbhKeranjang = new CreateButton(item.children()[2], 'Tambah Keranjang', 'btn-success');
+                                        tbhKeranjang.append();
+                                        tbhKeranjang.getButton().on('click', function(){
+                                                myCart.paket.push({
+                                                    "memberId": profiles.posm,
+                                                    "posp": bidang.posp,
+                                                    "posk": bidang.posk,
+                                                    "pose": data.pos,
+                                                    "posm": profiles.posm,
+                                                    "nama": profiles.nama,
+                                                    "prov": profiles.provinsi,
+                                                    "kab": profiles.kab_kota,
+                                                    "subjek": data.subjek,
+                                                    "jenjang": bidang.jenjang,
+                                                    "judul": data.judul,
+                                                    "bidang_studi": bidang.bidang_studi,
+                                                    "medali": bidang.medal,
+                                                    "sekolah": profiles.sekolah,
+                                                    "bundle": 'Soal dan Pembahasan',
+                                                    "item": ['Pembahasan'],
+                                                    "harga": 55000,
+                                                    "jumlah": 1
+                                                });
+                                                send2Cart({
+                                                    left : SFR('#cartbutton').children()[1].offset().left,
+                                                    top: SFR('#cartbutton').children()[1].offset().top - window.pageYOffset,
+                                                    width : SFR('#cartbutton').children()[1].width(),
+                                                    height :SFR('#cartbutton').children()[1].height()
+                                                });
+                                        })
+                                        
+                                
+                                }
+                            });
+                        })
+                    });
+                }
+                else{
+                    showToast('Pengajuan akses ke Soal dan Pembahasan sudah masuk ke dalam daftar keranjang anda', 'warning');
+                }
+                break;
+            case 'Sertifikat':
+                let cekExistCert = cekExistBundelPaket(profiles.posm, 'Sertifikat Digital', data.pos, bidang.posk);
+                if(!cekExistCert[0]){
+                    SFR(".overlayForm")
+                    .css({
+                    display: "block",
+                    }).delay(10, dom=>{
+                        hideScrollBody();
+                        SFR(".mainform")
+                        .css({
+                            display: "block",
+                            width: getTypeDisplay() == "laptop" ? "500px" : "100%",
+                            height: '250px',
+                            left: getTypeDisplay() == "laptop" ? "50%" : "0",
+                            top: "50%",
+                            "border-radius": "10px",
+                            "margin-left": getTypeDisplay() == "laptop" ? "-250px" : "0",
+                            "margin-top": "-125px",
+                        }).delay(100, dom =>{
+                            dom.children().forEach((item, ind) => {
+                                item.children()[1].html("");
+                                if (ind > 0) {
+                                item.css({
+                                    left: dom.width() + "px",
+                                });
+                                } else {
+                                    SFR('.tema .namesrc').css({'display':'none'});
+                                    item.css({
+                                        left: "0px",
+                                        })
+                                        .children()[0]
+                                        .children()[1]
+                                        .children()[0]
+                                        .html('Form Konfirmasi')
+                                        .parent()
+                                        .children()[1]
+                                        .html('Message Alert')
+                                        .parent().parent().parent().children()[1].html('<p>Anda tidak memiliki akses ke Sertifikat Digital. Apakah anda ingin meminta akses ke Sertifikat Digital? Jika <b>YA</b> tekan tombol <b>Tambah Keranjang</b> di bawah ini. Biaya pembukaan akses ke Sertifikat Digital setelah masa Open Claim berakhir dikenakan Rp. 43.000.</p>')
+                                        .parent().children()[2].html('');
+                                        let tbhKeranjang = new CreateButton(item.children()[2], 'Tambah Keranjang', 'btn-success');
+                                        tbhKeranjang.append();
+                                        tbhKeranjang.getButton().on('click', function(){
+                                                myCart.paket.push({
+                                                    "memberId": profiles.posm,
+                                                    "posp": bidang.posp,
+                                                    "posk": bidang.posk,
+                                                    "pose": data.pos,
+                                                    "posm": profiles.posm,
+                                                    "nama": profiles.nama,
+                                                    "prov": profiles.provinsi,
+                                                    "kab": profiles.kab_kota,
+                                                    "subjek": data.subjek,
+                                                    "jenjang": bidang.jenjang,
+                                                    "judul": data.judul,
+                                                    "bidang_studi": bidang.bidang_studi,
+                                                    "medali": bidang.medal,
+                                                    "sekolah": profiles.sekolah,
+                                                    "bundle": 'Sertifikat Digital',
+                                                    "item": ['Sertifikat Digital'],
+                                                    "harga": 43000,
+                                                    "jumlah": 1
+                                                });
+                                                send2Cart({
+                                                    left : SFR('#cartbutton').children()[1].offset().left,
+                                                    top: SFR('#cartbutton').children()[1].offset().top - window.pageYOffset,
+                                                    width : SFR('#cartbutton').children()[1].width(),
+                                                    height :SFR('#cartbutton').children()[1].height()
+                                                });
+                                        })
+                                        
+                                
+                                }
+                            });
+                        })
+                    });
+                }
+                else{
+                    showToast('Pengajuan akses ke Sertifikat Digital sudah masuk ke dalam daftar keranjang anda', 'warning');
+                }
+                break;
+            case 'Piagam':
+                let cekExistPiag = cekExistBundelPaket(profiles.posm, 'Piagam Digital', data.pos, bidang.posk);
+                if(!cekExistPiag[0]){
+                    if(in_array(['Emas', 'Perak', 'Perunggu', 'Finalis'], bidang.medal)){
+                        SFR(".overlayForm")
+                        .css({
+                        display: "block",
+                        }).delay(10, dom=>{
+                            hideScrollBody();
+                            SFR(".mainform")
+                            .css({
+                                display: "block",
+                                width: getTypeDisplay() == "laptop" ? "500px" : "100%",
+                                height: '250px',
+                                left: getTypeDisplay() == "laptop" ? "50%" : "0",
+                                top: "50%",
+                                "border-radius": "10px",
+                                "margin-left": getTypeDisplay() == "laptop" ? "-250px" : "0",
+                                "margin-top": "-125px",
+                            }).delay(100, dom =>{
+                                dom.children().forEach((item, ind) => {
+                                    item.children()[1].html("");
+                                    if (ind > 0) {
+                                    item.css({
+                                        left: dom.width() + "px",
+                                    });
+                                    } else {
+                                        SFR('.tema .namesrc').css({'display':'none'});
+                                        item.css({
+                                            left: "0px",
+                                            })
+                                            .children()[0]
+                                            .children()[1]
+                                            .children()[0]
+                                            .html('Form Konfirmasi')
+                                            .parent()
+                                            .children()[1]
+                                            .html('Message Alert')
+                                            .parent().parent().parent().children()[1].html('<p>Anda tidak memiliki akses ke Piagam Digital. Apakah anda ingin meminta akses ke Piagam Digital? Jika <b>YA</b> tekan tombol <b>Tambah Keranjang</b> di bawah ini. Biaya pembukaan akses ke Piagam Digital setelah masa Open Claim berakhir dikenakan Rp. 55.000.</p>')
+                                            .parent().children()[2].html('');
+                                            let tbhKeranjang = new CreateButton(item.children()[2], 'Tambah Keranjang', 'btn-success');
+                                            tbhKeranjang.append();
+                                            tbhKeranjang.getButton().on('click', function(){
+                                                    myCart.paket.push({
+                                                        "memberId": profiles.posm,
+                                                        "posp": bidang.posp,
+                                                        "posk": bidang.posk,
+                                                        "pose": data.pos,
+                                                        "posm": profiles.posm,
+                                                        "nama": profiles.nama,
+                                                        "prov": profiles.provinsi,
+                                                        "kab": profiles.kab_kota,
+                                                        "subjek": data.subjek,
+                                                        "jenjang": bidang.jenjang,
+                                                        "judul": data.judul,
+                                                        "bidang_studi": bidang.bidang_studi,
+                                                        "medali": bidang.medal,
+                                                        "sekolah": profiles.sekolah,
+                                                        "bundle": 'Piagam Digital',
+                                                        "item": ['Piagam Digital'],
+                                                        "harga": 55000,
+                                                        "jumlah": 1
+                                                    });
+                                                    send2Cart({
+                                                        left : SFR('#cartbutton').children()[1].offset().left,
+                                                        top: SFR('#cartbutton').children()[1].offset().top - window.pageYOffset,
+                                                        width : SFR('#cartbutton').children()[1].width(),
+                                                        height :SFR('#cartbutton').children()[1].height()
+                                                    });
+                                            })
+                                            
+                                    
+                                    }
+                                });
+                            })
+                        });
+                    }
+                    else{
+                        showToast('Piagam hanya bisa diakses oleh Medalis atau Finalis', 'error');
+                    }
+                }
+                else{
+                    showToast('Pengajuan akses ke Piagam Digital sudah masuk ke dalam daftar keranjang anda', 'warning');
+                }
+                break;
+        }
+    }
+    else{
+        switch(kontext){
+            case 'Pembahasan':
+                showToast('Anda tidak memiliki akses ke Pembahasan', 'warning');
+                break;
+            case 'Sertifikat':
+                showToast('Anda tidak memiliki akses ke Sertifikat', 'warning');
+                break;
+            case 'Piagam':
+                showToast('Anda tidak memiliki akses ke Piagam', 'warning');
+                break;
+        }
+    }
+}
+
+function initRiwayat(data, obeng, posk){
+   getData('init', {
+        token : getCookie('token'),
+        order : 'sendme',
+        data:data,
+        posk: posk
+   }, function(resp){
+        if(resp.data == 'success'){
+            if(getStorage(obeng)!= null){
+                    removeStorage(obeng);
+                    setTimeout(()=>{
+                        SFR('.namlast'+obeng).delete();
+                    }, 1000);
+            }
+        }
+        else{
+            setTimeout(()=>{
+                initRiwayat(data, obeng, posk);
+            }, (Math.floor(Math.random() * 15) + 3) * 100000);
+        }
+    })
+}
+
+function thatImPerlu(obeng){
+    if(getStorage(obeng) == null){
+        return '';
+    }
+    else{
+        let kandit = JSON.parse(getStorage(obeng));
+        if(kandit.status == 'belum' && kandit.data.length > 0 ){
+            return `<svg class="rotating namlast${obeng}" width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22 12C22 17.52 17.52 22 12 22C6.48 22 3.11 16.44 3.11 16.44M3.11 16.44H7.63M3.11 16.44V21.44M2 12C2 6.48 6.44 2 12 2C18.67 2 22 7.56 22 7.56M22 7.56V2.56M22 7.56H17.56" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>`;
+        }
+        else{
+            return '';     
+        }
+    }
+}
+
+function forceDirectRiwayat(){
+    let key = base64_encode('riwayat');
+    if(getStorage(key) != null){
+        let rwyt = JSON.parse(repair(getStorage(key), key));
+        rwyt.date = '2020-06-10 22:38:38';
+        setStorage(key, shake(JSON.stringify(rwyt), key));
+    }
+}

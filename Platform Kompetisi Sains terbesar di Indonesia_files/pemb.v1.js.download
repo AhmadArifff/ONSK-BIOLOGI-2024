@@ -1,0 +1,43 @@
+function openPemb(data, theme){
+    SFR('.headerAsset .theme').html('SOAL DAN PEMBAHASAN <br/>'+ theme);
+    $('#printerasset').hide();
+    hideScrollBody();
+    SFR(".overlayAsset").show();
+
+    let disp = '';
+
+    data.forEach((item, index) => {
+        disp += `<div class="cardsoal">
+                    ${'<b style="font-size:1.2rem">Soal Nomor '+(index+1)+'. </b>'+item.soal}
+                    ${(item.opta.replace(/[\n\r\s]/g, '')==''?'':'Option A :'+item.opta)}
+                    ${(item.optb.replace(/[\n\r\s]/g, '')==''?'':'Option B :'+item.optb)}
+                    ${(item.optc.replace(/[\n\r\s]/g, '')==''?'':'Option C :'+item.optc)}
+                    ${(item.optd.replace(/[\n\r\s]/g, '')==''?'':'Option D :'+item.optd)}
+                    ${(item.opte.replace(/[\n\r\s]/g, '')==''?'':'Option E :'+item.opte)}
+                    ${'<b style="font-size:1.0rem">Jawaban : '+item.ans+'. </b>'}
+                    ${item.pembahasan}
+                </div>`;
+    });
+    SFR(".contentAsset")
+        .show()
+        .css({
+        width:
+            SFR("body").width() > 900 ? "900px" : SFR("body").width() - 20 + "px",
+        "margin-left":
+            SFR("body").width() > 900
+            ? (SFR("body").width() - 900) / 2 + "px"
+            : "10px",
+    }).html(disp);
+    setTimeout(()=>{
+        if(SFR('.cardsoal').width()< 600){
+            let imgs = SFR('.cardsoal img');
+            imgs.forEach(item=>{
+                if(parseInt(item.style.width) > SFR('.cardsoal').width()){
+                    SFR(item)[0].style.transition = '0.3s'
+                    SFR(item).setAttr('width','100%');
+                    SFR(item)[0].style.width = '100%'
+                }
+            });
+        }
+    }, 1000);
+}

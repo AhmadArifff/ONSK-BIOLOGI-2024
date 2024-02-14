@@ -1,0 +1,894 @@
+var jadwalData = [],
+    rankSorot = [];
+
+SFR(document).ready(function () {
+    SFR(".form1 .formbody").on("click", ".cdrank", function () {
+        let meta = SFR(this).getAttr('meta').split('-'),
+            posm = meta[2],
+            claimidx = meta[3],
+            posk = meta[4],
+            nama,
+            judul = jadwalData.claim[claimidx].judul,
+            medal = '',
+            sekolah, prov, kab, bidang_studi, subjek, jenjang;
+            rankSorot.forEach(elem=>{
+                if(elem.pos == meta[0]){
+                    nama = elem.nama;
+                    medal = elem.medali;
+                    sekolah = elem.sekolah;
+                    prov = elem.prov;
+                    kab = elem.kab;
+                }
+            });
+            jadwalData.claim[claimidx].bidang.forEach(element=>{
+                if(element.posk == posk){
+                    bidang_studi = element.bidang_studi;
+                    subjek = element.subjek;
+                    jenjang = element.jenjang;
+                }
+            })
+    
+        if(profiles.posm == posm){
+            showload();
+            getData('cart',{
+                token:getCookie('token'),
+                order:'getpaket',
+                posp:meta[0],
+                pose:meta[1],
+                medal:medal
+            }, function(resp){
+                let form = SFR('.mainform').children();
+                form[0].css({
+                    'left': - SFR('.mainform').width() + 'px',
+                });
+                let disp = ``;
+                resp.data.forEach((element, idx)=>{
+                    disp += `<div class="card-info z-depth-9">
+                                <div class="banner-info">
+                                    <img src="${element.banner}" class="banner-produk">
+                                </div>
+                                <div class="ket-info">
+                                    <div class="ket">
+                                        ${element.bundle}
+                                    </div>
+                                    <div class="rincian">
+                                       ${jabarkan(element.item)}
+                                    </div>
+                                </div>
+                                ${((cekExistBundelPaket(posm, element.bundle, meta[1], meta[4])[0])?`
+                                <div class="harga added z-depth-3 addtocart" meta="${idx}">
+                                        <div class="btnorder">
+                                            added
+                                        </div>
+                                </div>`:`<div class="harga z-depth-3 addtocart" meta="${idx}">
+                                    <div class="btnorder">
+                                        Rp. ${formatMoney(element.harga)}
+                                    </div>
+                                </div>`)}
+                            </div>`;
+                });
+                form[1].css({
+                    'left':'0px'
+                }).children()[1].html(disp)
+                .parent().children()[0].children()[1].children()[0].html(filterAin(nama))
+                .parent().children()[1].html(`Merchandise ${judul}`)
+                .parent().parent().parent().children()[2].html(``);
+                let btnOpenCart = new CreateButton(form[1].children()[2],'Buka Keranjang', 'btn-warning');
+                btnOpenCart.append();
+                btnOpenCart.getButton().on('click', function(){
+                    let cartCondition = {
+                        left : SFR('#cartbutton').children()[1].offset().left,
+                        top: SFR('#cartbutton').children()[1].offset().top - window.pageYOffset,
+                        width : SFR('#cartbutton').children()[1].width(),
+                        height :SFR('#cartbutton').children()[1].height()
+                    };
+                    send2Cart(cartCondition);
+                    setTimeout(()=>{
+                        SFR('#cartbutton').click();
+                    }, 1000);
+                })
+                hideload();
+
+                SFR('.addtocart').on('click', function(){
+                    let indexResp = SFR(this).getAttr('meta');
+                    let palang = cekExistBundelPaket(posm, resp.data[indexResp].bundle, meta[1], meta[4]);
+                    if(palang[0]){
+                        myCart.paket.splice(palang[1], 1);
+                        SFR(this).removeClass('added').children()[0].html(`Rp. ${formatMoney(resp.data[indexResp].harga)}`)
+                    }
+                    else{
+                        myCart.paket.push({
+                            "memberId": meta[2],
+                            "posp": meta[0],
+                            "posk": meta[4],
+                            "pose": meta[1],
+                            "posm": meta[2],
+                            "nama": nama,
+                            "prov": prov,
+                            "kab": kab,
+                            "subjek": subjek,
+                            "jenjang": jenjang,
+                            "judul":judul,
+                            "bidang_studi": bidang_studi,
+                            "medali": medal,
+                            "sekolah": sekolah,
+                            "bundle": resp.data[indexResp].bundle,
+                            "item": resp.data[indexResp].item,
+                            "harga": resp.data[indexResp].harga,
+                            "jumlah": 1
+                          });
+                          SFR(this).addClass('added').children()[0].html('added')
+                        // tambah koleksi kart
+                    } 
+                });
+                SFR('.banner-produk').on('click', function(){
+                    getNormalizePreviewOnForm(this.src, resp =>{
+                        let mag = new Magnimage(SFR(this), this.src, resp)
+                        mag.showUp();
+                    })
+                })
+            })
+        }
+        else{
+            let form = SFR('.mainform').children();
+            form[0].css({
+                'left': - SFR('.mainform').width() + 'px',
+            });
+            form[1].css({
+                'left':'0px'
+            }).children()[1].html(`<p>Anda memilih kartu pengumuman yang bukan nama anda. Apakah anda yakin lanjut memesankan orang lain?</p>`)
+            .parent().children()[0].children()[1].children()[0].html('Form Konfirmasi')
+            .parent().children()[1].html(`Message Alert`)
+            .parent().parent().parent().parent().css({
+                'height':'200px',
+                'margin-top':'-100px',
+                'top': "50%"
+            }).children()[1].children()[2].html('');
+
+            let buttonnext = new CreateButton(SFR('.form2 .formfooter'), 'Next', 'btn-success');
+            buttonnext.append();
+            buttonnext.getButton().on('click', function(){
+                form.forEach((frm, idx)=>{
+                    if(idx < 2){
+                        frm.css({
+                            'left': - SFR('.mainform').width() + 'px',
+                        });
+                    }
+                    else{
+                        showload();
+                        getData('cart',{
+                            token:getCookie('token'),
+                            order:'getpaket',
+                            posp:meta[0],
+                            pose:meta[1],
+                            medal:medal
+                        }, function(resp){
+                            hideload();
+                            frm.parent().css({
+                                width: getTypeDisplay() == "laptop" ? "500px" : "100%",
+                                height: getTypeDisplay() == "laptop" ? "600px" : "100%",
+                                left: getTypeDisplay() == "laptop" ? "50%" : "0",
+                                top: getTypeDisplay() == "laptop" ? "50%" : "0",
+                                "border-radius": "10px",
+                                "margin-left": getTypeDisplay() == "laptop" ? "-250px" : "0",
+                                "margin-top": getTypeDisplay() == "laptop" ? "-300px" : "0",
+                            });
+                            let disp = ``;
+                            resp.data.forEach((element, idx)=>{
+                                disp += `<div class="card-info z-depth-9">
+                                            <div class="banner-info">
+                                                <img src="${element.banner}" class="banner-produk">
+                                            </div>
+                                            <div class="ket-info">
+                                                <div class="ket">
+                                                    ${element.bundle}
+                                                </div>
+                                                <div class="rincian">
+                                                   ${jabarkan(element.item)}
+                                                </div>
+                                            </div>
+                                            ${((cekExistBundelPaket(posm, element.bundle, meta[1], meta[4])[0])?`
+                                            <div class="harga added z-depth-3 addtocart" meta="${idx}">
+                                                <div class="btnorder">
+                                                    added
+                                                 </div>
+                                            </div>`:`<div class="harga z-depth-3 addtocart" meta="${idx}">
+                                                <div class="btnorder">
+                                                    Rp. ${formatMoney(element.harga)}
+                                                </div>
+                                            </div>`)}
+                                        </div>`;
+                            });
+
+                             
+                            frm.css({
+                                'left':0
+                            }).children()[1].html(disp).parent()
+                            .children()[0].children()[1].children()[0].html(filterAin(nama))
+                            .parent().children()[1].html(`Merchandise ${judul}`)
+                            .parent().parent().parent().children()[2].html(``);
+                            let btnOpenCart = new CreateButton(frm.children()[2],'Buka Keranjang', 'btn-warning');
+                            btnOpenCart.append();
+                            btnOpenCart.getButton().on('click', function(){
+                                let cartCondition = {
+                                    left : SFR('#cartbutton').children()[1].offset().left,
+                                    top: SFR('#cartbutton').children()[1].offset().top - window.pageYOffset,
+                                    width : SFR('#cartbutton').children()[1].width(),
+                                    height :SFR('#cartbutton').children()[1].height()
+                                };
+                                send2Cart(cartCondition);
+                                setTimeout(()=>{
+                                    SFR('#cartbutton').click();
+                                }, 1000);
+                            });
+                            
+
+                            SFR('.addtocart').on('click', function(){
+                                let indexResp = SFR(this).getAttr('meta');
+                                let palang = cekExistBundelPaket(posm, resp.data[indexResp].bundle, meta[1], meta[4]);
+                                if(palang[0]){
+                                    myCart.paket.splice(palang[1], 1);
+                                    SFR(this).removeClass('added').children()[0].html(`Rp. ${formatMoney(resp.data[indexResp].harga)}`)
+                                }
+                                else{
+                                    myCart.paket.push({
+                                        "memberId": meta[2],
+                                        "posp": meta[0],
+                                        "posk": meta[4],
+                                        "pose": meta[1],
+                                        "posm": meta[2],
+                                        "nama": nama,
+                                        "prov": prov,
+                                        "kab": kab,
+                                        "subjek": subjek,
+                                        "jenjang": jenjang,
+                                        "judul":judul,
+                                        "bidang_studi": bidang_studi,
+                                        "medali": medal,
+                                        "sekolah": sekolah,
+                                        "bundle": resp.data[indexResp].bundle,
+                                        "item": resp.data[indexResp].item,
+                                        "harga": resp.data[indexResp].harga,
+                                        "jumlah": 1
+                                      });
+                                      SFR(this).addClass('added').children()[0].html('added')
+                                    // tambah koleksi kart
+                                }
+                            });
+                            SFR('.banner-produk').on('click', function(){
+                                getNormalizePreviewOnForm(this.src, resp =>{
+                                    let mag = new Magnimage(SFR(this), this.src, resp)
+                                    mag.showUp();
+                                })
+                            })
+                        })
+                    }
+                })
+                
+            })
+
+            let buttonbatal = new CreateButton(SFR('.form2 .formfooter'), 'Batal', 'btn-danger');
+            buttonbatal.append();
+
+            buttonbatal.getButton().on('click', function(){
+                SFR(".form2 .posback").click();
+            })
+        }
+
+
+       
+    });
+    SFR('.form1 .namesrc svg').on('click', function(){
+        SFR(this).parent().css({
+            'width': (SFR('.form1 .formhead').width()-40) + 'px'
+        }).children()[1].show().parent().children()[0].css({
+            'left': '10px'
+        }).parent().children()[1][0].focus();
+    });
+    SFR('.namesrc input').on('input', function(e){
+        debounceText(e.target.value);
+    });
+
+    let tempMemories = [];
+    SFR('.namesrc input').on('keypress', function(e){
+        if(e.keyCode == 13){
+            if(e.target.value.length > 2){
+                showload();
+                let crd = SFR('.form1 .formbody').childrenInside(),
+                    crdIndex = -1,
+                    crdpalang = false;
+                crd.forEach((element,ind)=>{
+                    let textInside = element.innerText;
+                    if (textInside.toUpperCase().indexOf(e.target.value.toUpperCase()) != -1) {
+                        if(!in_array(tempMemories, ind)){
+                            if(!crdpalang){
+                                crdIndex = ind;
+                                crdpalang = true;
+                                tempMemories.push(ind);
+                             }
+                        }
+                    }
+                });
+                if(crdIndex != -1){
+                    let posm = crd[crdIndex].id;
+                    SFR('.form1 .formbody').animateScrollTo(SFR('#'+posm), 300, ()=>{
+                         hideload();
+                    });
+                 }
+                 else{
+                     setTimeout(()=>{
+                         hideload();
+                         showToast('Scroll pencarian sudah yang paling bawah', 'error');
+                     }, 300);
+                 }
+            }
+        }
+        else{
+            tempMemories=[];   
+        }
+    });
+});
+const debounceText = debounce(text => {
+    if (text != '') {
+        showload();
+        let crd = SFR('.form1 .formbody').childrenInside(),
+            crdIndex = -1,
+            crdpalang = false;
+        crd.forEach((element,ind)=>{
+             let textInside = element.innerText;
+             if (textInside.toUpperCase().indexOf(text.toUpperCase()) != -1) {
+                 if(!crdpalang){
+                    crdIndex = ind;
+                    crdpalang = true;
+                 }
+             }
+        });
+        if(crdIndex != -1){
+           let posm = crd[crdIndex].id;
+           SFR('.form1 .formbody').animateScrollTo(SFR('#'+posm), 300, ()=>{
+                hideload();
+           });
+        }
+        else{
+            setTimeout(()=>{
+                hideload();
+                showToast('Nama yang anda ketikan tidak terdaftar', 'error');
+            }, 300);
+        }
+    }
+}, 600);
+
+function cekExistBundelPaket(posm, namabundle, pose, posk){
+    let palang = false,
+        idx = -1;
+    myCart.paket.forEach((elem, index)=>{
+        if(elem.posm == posm && elem.pose == pose && elem.posk == posk && elem.bundle == namabundle){
+            palang = true;
+            idx = index;
+        }
+    });
+    return [palang, idx];
+} 
+function dispJadwal(){
+    let key = base64_encode('jadwal');
+    if(getStorage(key) != null && getJarakWaktu(gettoday(), JSON.parse(repair(getStorage(key), key)).date, "Detik") > 0){
+        jadwalData = JSON.parse(repair(getStorage(key), key));
+        let timerpos = getTimerpos(jadwalData.data);
+        showload();
+
+        if(timerpos.length > 0 ){
+            getData('jadwal', {
+                token: getCookie("token"),
+                order: "gettoday",
+                timerpos : JSON.stringify(timerpos)
+            }, function(resp){
+                if(resp.response == 'success'){
+                    jadwalData.data.forEach(el=>{
+                        el.today = resp.data
+                        el.item.forEach(it=>{
+                            resp.timerpos.forEach(timerpos=>{
+                                if(it.posk == timerpos.posk){
+                                    it.timerpos = timerpos.timerpos
+                                }
+                            });
+                        })
+                    });
+                    setStorage(key, shake(JSON.stringify(jadwalData), key));
+                    setTimeout(() => {
+                        renderJadwal();
+                        hideload();
+                    }, 600);
+                }
+            })
+        }
+        else{
+            setTimeout(() => {
+                renderJadwal();
+                hideload();
+            }, 600);
+        }
+    }
+    else{
+      showload();
+      getData(
+        "jadwal",
+        {
+          token: getCookie("token"),
+          order: "dispjadwal",
+          tdy : gettoday()
+        },
+        (resp) => {
+          if (resp.response == "success") {
+            jadwalData = {
+              date: resp.data.date,
+              data: resp.data.data,
+              claim: resp.data.claim
+            };
+            setStorage(key, shake(JSON.stringify(resp.data), key));
+            renderJadwal();
+          }
+          hideload();
+        }
+      );
+    }
+}
+function renderJadwal(){
+    SFR(".stage1, .stage2, .stage3").hide();
+    dispUjian();
+    dispPengumuman();
+}
+
+function dispUjian(){
+    if(jadwalData.data.length > 0){
+        SFR(".maindisp .stage1").show();
+        SFR(".maindisp .stage1").html(`
+        <div class="d-flex justify-content-between align-items-center flex-wrap mb-5 mt-100 gap-3">
+            <div class="d-flex flex-column">
+                <div class="flex justify-content-start">
+                    <svg class="svg-icon" fill="none" width="32px"  viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" class="icon">
+                       <path fill="currentColor" d="M928 224H768v-56c0-4.4-3.6-8-8-8h-56c-4.4 0-8 3.6-8 8v56H548v-56c0-4.4-3.6-8-8-8h-56c-4.4 0-8 3.6-8 8v56H328v-56c0-4.4-3.6-8-8-8h-56c-4.4 0-8 3.6-8 8v56H96c-17.7 0-32 14.3-32 32v576c0 17.7 14.3 32 32 32h832c17.7 0 32-14.3 32-32V256c0-17.7-14.3-32-32-32zm-40 568H136V296h120v56c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8v-56h148v56c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8v-56h148v56c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8v-56h120v496zM416 496H232c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8h184c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8zm0 136H232c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8h184c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8zm308.2-177.4L620.6 598.3l-52.8-73.1c-3-4.2-7.8-6.6-12.9-6.6H500c-6.5 0-10.3 7.4-6.5 12.7l114.1 158.2a15.9 15.9 0 0 0 25.8 0l165-228.7c3.8-5.3 0-12.7-6.5-12.7H737c-5-.1-9.8 2.4-12.8 6.5z"/>
+                    </svg>
+                    <span>Jadwal Ujian</span>
+                </div>
+            </div>
+        </div>
+        <div class="row"></div>`);
+        let jadwalujian = ``;
+        jadwalData.data.forEach(element => {
+            let jadwalbidang = ``,
+                numItem = 0,
+                subjekBidang = '';
+            element.item.forEach(item=>{
+                if(getJarakWaktu(element.today, item.akhir, 'Detik') > 0){
+                    numItem++;
+                    subjekBidang = `${jabarkan(item.subjek)} - ${jabarkan(item.jenjang)}`;
+                    jadwalbidang +=`<div class="containerjadwal" id="${item.timerpos}">
+                                        <div class="pointjadwal mt-2">
+                                                <svg width="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path fill-rule="evenodd" clip-rule="evenodd" d="M3 16.8701V9.25708H21V16.9311C21 20.0701 19.0241 22.0001 15.8628 22.0001H8.12733C4.99561 22.0001 3 20.0301 3 16.8701ZM7.95938 14.4101C7.50494 14.4311 7.12953 14.0701 7.10977 13.6111C7.10977 13.1511 7.46542 12.7711 7.91987 12.7501C8.36443 12.7501 8.72997 13.1011 8.73985 13.5501C8.7596 14.0111 8.40395 14.3911 7.95938 14.4101ZM12.0198 14.4101C11.5653 14.4311 11.1899 14.0701 11.1701 13.6111C11.1701 13.1511 11.5258 12.7711 11.9802 12.7501C12.4248 12.7501 12.7903 13.1011 12.8002 13.5501C12.82 14.0111 12.4643 14.3911 12.0198 14.4101ZM16.0505 18.0901C15.596 18.0801 15.2305 17.7001 15.2305 17.2401C15.2206 16.7801 15.5862 16.4011 16.0406 16.3911H16.0505C16.5148 16.3911 16.8902 16.7711 16.8902 17.2401C16.8902 17.7101 16.5148 18.0901 16.0505 18.0901ZM11.1701 17.2401C11.1899 17.7001 11.5653 18.0611 12.0198 18.0401C12.4643 18.0211 12.82 17.6411 12.8002 17.1811C12.7903 16.7311 12.4248 16.3801 11.9802 16.3801C11.5258 16.4011 11.1701 16.7801 11.1701 17.2401ZM7.09989 17.2401C7.11965 17.7001 7.49506 18.0611 7.94951 18.0401C8.39407 18.0211 8.74973 17.6411 8.72997 17.1811C8.72009 16.7311 8.35456 16.3801 7.90999 16.3801C7.45554 16.4011 7.09989 16.7801 7.09989 17.2401ZM15.2404 13.6011C15.2404 13.1411 15.596 12.7711 16.0505 12.7611C16.4951 12.7611 16.8507 13.1201 16.8705 13.5611C16.8804 14.0211 16.5247 14.4011 16.0801 14.4101C15.6257 14.4201 15.2503 14.0701 15.2404 13.6111V13.6011Z" fill="currentColor"></path>
+                                                    <path opacity="0.4" d="M3.00293 9.25699C3.01577 8.66999 3.06517 7.50499 3.15803 7.12999C3.63224 5.02099 5.24256 3.68099 7.54442 3.48999H16.4555C18.7376 3.69099 20.3677 5.03999 20.8419 7.12999C20.9338 7.49499 20.9832 8.66899 20.996 9.25699H3.00293Z" fill="currentColor"></path>
+                                                    <path d="M8.30465 6.59C8.73934 6.59 9.06535 6.261 9.06535 5.82V2.771C9.06535 2.33 8.73934 2 8.30465 2C7.86996 2 7.54395 2.33 7.54395 2.771V5.82C7.54395 6.261 7.86996 6.59 8.30465 6.59Z" fill="currentColor"></path>
+                                                    <path d="M15.6953 6.59C16.1201 6.59 16.456 6.261 16.456 5.82V2.771C16.456 2.33 16.1201 2 15.6953 2C15.2606 2 14.9346 2.33 14.9346 2.771V5.82C14.9346 6.261 15.2606 6.59 15.6953 6.59Z" fill="currentColor"></path>
+                                                </svg>
+                                                <span class="judulbidangs">${item.bidang_studi}</span>
+                                        </div>
+                                        <div class="pointjadwal">
+                                                <p>${beautyDate(item.mulai.split(' ')[0])} - ${item.mulai.split(' ')[1]} s/d ${item.akhir.split(' ')[1]}</p>
+                                        </div>
+                                        <div class="pointjadwal">
+                                                <div class="group">
+                                                    <svg width="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <path d="M21.4274 2.5783C20.9274 2.0673 20.1874 1.8783 19.4974 2.0783L3.40742 6.7273C2.67942 6.9293 2.16342 7.5063 2.02442 8.2383C1.88242 8.9843 2.37842 9.9323 3.02642 10.3283L8.05742 13.4003C8.57342 13.7163 9.23942 13.6373 9.66642 13.2093L15.4274 7.4483C15.7174 7.1473 16.1974 7.1473 16.4874 7.4483C16.7774 7.7373 16.7774 8.2083 16.4874 8.5083L10.7164 14.2693C10.2884 14.6973 10.2084 15.3613 10.5234 15.8783L13.5974 20.9283C13.9574 21.5273 14.5774 21.8683 15.2574 21.8683C15.3374 21.8683 15.4274 21.8683 15.5074 21.8573C16.2874 21.7583 16.9074 21.2273 17.1374 20.4773L21.9074 4.5083C22.1174 3.8283 21.9274 3.0883 21.4274 2.5783Z" fill="currentColor"></path>
+                                                    </svg>
+                                                    <span onclick="openCG('${item.chat_group}')">Link Group</span>
+                                                </div>
+                                                <div class="timers">
+                                                    <svg width="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <path opacity="0.4" d="M22 12C22 17.524 17.523 22 12 22C6.477 22 2 17.524 2 12C2 6.478 6.477 2 12 2C17.523 2 22 6.478 22 12Z" fill="currentColor"></path>
+                                                        <path d="M15.5739 15.8145C15.4429 15.8145 15.3109 15.7805 15.1899 15.7095L11.2639 13.3675C11.0379 13.2315 10.8989 12.9865 10.8989 12.7225V7.67554C10.8989 7.26154 11.2349 6.92554 11.6489 6.92554C12.0629 6.92554 12.3989 7.26154 12.3989 7.67554V12.2965L15.9589 14.4195C16.3139 14.6325 16.4309 15.0925 16.2189 15.4485C16.0779 15.6835 15.8289 15.8145 15.5739 15.8145Z" fill="currentColor"></path>
+                                                    </svg>
+                                                    <span>...</span>
+                                                </div>
+                                        </div>
+                                    </div>`;
+                }
+            });
+            if(numItem > 0 ){
+                jadwalujian += `<div class="col-lg-6">
+                <div class="card mb-5 z-depth-0" style="border-radius: 10px;">
+                    ${element.reg_type == 'Berbayar'? `<div class="ribbonVip"></div>`:``}
+                <div class="row no-gutters">
+                    <div class="col-md-5">
+                        <img src="${element.banner}" class="banner-jadwal z-depth-9" alt="#" loading="lazy">
+                        <div class="juduleventjadwal">
+                            <h4 class="card-title">${element.judul}</h4>
+                            <h5 class="card-subtitle">${getNameDay(element.tanggal_event)}, ${beautyDate(element.tanggal_event)}</h5>
+                            <h5 class="card-subtitle">${subjekBidang}</h5>
+                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        <div class="card-body p-3">
+                            ${jadwalbidang}
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>`;
+            }
+        });
+        SFR(".maindisp .stage1 .row").html(jadwalujian);
+        jadwalData.data.forEach(el => {
+            el.item.forEach(it=>{
+                renderTimer(el.today, 
+                    it.mulai, 
+                    it.akhir, 
+                    it.obeng, 
+                    it.mur, 
+                    it.timerpos, 
+                    it.posp, 
+                    it.posk, 
+                    el.posm, 
+                    it.bundle, 
+                    it.calendar, 
+                    it.bidang_studi + ' - '+ el.judul);
+            });
+        });
+
+    }
+    else{
+        SFR(".maindisp .stage1").html(``);
+        SFR(".maindisp .stage1").hide();
+    }
+}
+
+function  openCG(cg){
+    window.open(cg, '');
+} 
+function getTimerpos(data){
+    let timerPos = [];
+    data.forEach(el=>{
+        el.item.forEach(it=>{
+            timerPos.push(it.posk);
+        })
+    });
+    return timerPos;
+}
+
+function renderTimer(today, mulai, akhir, obeng, mur, timerpos, posp, posk, posm, bundle, calendar, judul) {
+    var selangDepan = parseInt(getJarakWaktu(today, mulai, 'Detik')),
+        selangBelakang = parseInt(getJarakWaktu(today, akhir, 'Detik'));
+    if (selangDepan >= 86400) {
+       SFR('#'+ timerpos).children()[2].children()[1].children()[1].html(getJarakWaktu(today, mulai, 'Hari') + ' Hari lagi');
+    }
+    else if (selangDepan > 0 && selangDepan <= 86400) {
+        getDimensiWaktu(selangDepan, posp, posk, posm, obeng, bundle, mur, mulai, akhir, today, timerpos, judul);
+        if(selangDepan > 0 && selangDepan <= (3600 * 12)){
+            if(getStorage(mur) == null){
+                sedot(mur, bundle, posk);
+            }
+        }else{
+            sedot(mur, bundle, posk);
+        }
+    } 
+    else {
+        if (selangBelakang > 0) {
+            if(SFR('#'+ timerpos).length>0){
+                SFR('#'+ timerpos).children()[2].children()[1].children()[1].html('Mulai ujian').css({
+                    'color':'#158042'
+                }).parent().children()[0].css({
+                    'color':'#158042'
+                });
+                
+                SFR('#'+ timerpos).children()[2].children()[1].on('click', function(){
+                     if(getStorage(mur)==null){
+                        showload();
+                        sedot(mur, bundle, posk);
+                     }
+                     else{
+                        showload();
+                        getData('jadwal',{
+                            token:getCookie('token'),
+                            posk:posk,
+                            order:'jadid'
+                        }, resp=>{
+                            if(resp.response == 'success'){
+                                openCAT(JSON.parse(repair(getStorage(mur), resp.data)), resp.today, obeng, mulai, akhir, timerpos, judul, posk);
+                                hideload();
+                            }
+                        });
+                     }
+                });
+            }
+        } else {
+            if(SFR('#'+ timerpos).length>0){
+                SFR('#'+ timerpos).delete();
+            }
+        }
+    }
+}
+function getDimensiWaktu(selisih, posp, posk, posm, obeng, bundle, mur, mulai, akhir, today, timerpos, judul) {
+    setInterval(function() {
+            selisih--;
+            if (selisih > 0) {
+                var sisaDetik = selisih % 3600;
+                var terbagi = selisih - sisaDetik;
+                var jams = 0;
+                var menits = 0;
+                var detiks = 0;
+
+                if (selisih >= 3600) {
+                    // kondisi lebih dari 1 jam
+                    jams = terbagi / 3600;
+                    if (sisaDetik > 0) {
+                        var sisaMenit = sisaDetik % 60;
+                        var dMenit = sisaDetik - sisaMenit;
+                        if (dMenit >= 60) {
+                            menits = dMenit / 60;
+                            if (sisaMenit > 0) {
+                                detiks = sisaMenit
+                            } else {
+                                detiks = 0;
+                            }
+                        } else {
+                            menits = 0;
+                            if (sisaMenit > 0) {
+                                detiks = sisaMenit
+                            } else {
+                                detiks = 0;
+                            }
+
+                        }
+                    } else {
+                        menits = 0;
+                        detiks = sisaDetik;
+                    }
+                } else {
+                    jams = 0;
+                    if (sisaDetik > 0) {
+                        var sisaMenit = sisaDetik % 60;
+                        var dMenit = sisaDetik - sisaMenit;
+                        if (dMenit >= 60) {
+                            menits = dMenit / 60;
+                            if (sisaMenit > 0) {
+                                detiks = sisaMenit
+                            } else {
+                                detiks = 0;
+                            }
+                        } else {
+                            menits = 0;
+                            if (sisaMenit > 0) {
+                                detiks = sisaMenit
+                            } else {
+                                detiks = 0;
+                            }
+                        }
+                    } else {
+                        menits = 0;
+                        detiks = sisaDetik;
+                    }
+                }
+                if(SFR('#'+ timerpos).length>0){
+                    SFR('#'+ timerpos).children()[2].children()[1].children()[1].html((jams==0? '':jams + 'h ') + (menits==0?'':menits + 'm ') + detiks + 's').css({
+                        'color':'#f0b811'
+                    }).parent().children()[0].css({
+                        'color':'#f0b811'
+                    });
+                }
+            } else {
+                if(SFR('#'+ timerpos).length>0){
+                    SFR('#'+ timerpos).children()[2].children()[1].children()[1].html('Mulai ujian').css({
+                        'color':'#158042'
+                    }).parent().children()[0].css({
+                        'color':'#158042'
+                    });
+                    
+                    SFR('#'+ timerpos).children()[2].children()[1].on('click', function(){
+                         if(getStorage(mur)==null){
+                            showload();
+                            sedot(mur, bundle, posk);
+                         }
+                         else{
+                            showload();
+                            getData('jadwal',{
+                                token:getCookie('token'),
+                                posk:posk,
+                                order:'jadid'
+                            }, resp=>{
+                                if(resp.response == 'success'){
+                                    openCAT(JSON.parse(repair(getStorage(mur), resp.data)), resp.today, obeng, mulai, akhir, timerpos, judul, posk);
+                                    hideload();
+                                }
+                            });
+                         }
+                    });
+                }
+            }
+        },
+        1000);
+}
+
+function forceDirectJadwal(){
+    let key = base64_encode('jadwal'),
+    jdwldt = JSON.parse(repair(getStorage(key), key));
+    jdwldt.date = '2020-01-01 01:59';
+    setStorage(key, shake(JSON.stringify(jdwldt), key));
+    setButtonIcon("Jadwal");
+}
+
+function dispPengumuman(){
+    if(jadwalData.claim.length>0){
+        SFR(".maindisp .stage2").show();
+        SFR(".maindisp .stage2").html(`
+        <div class="d-flex justify-content-between align-items-center flex-wrap mb-5 ${(jadwalData.data.length>0? 'mt-0':'mt-100')} gap-3">
+            <div class="d-flex flex-column">
+                <div class="flex justify-content-start">
+                <svg class="svgi-con" fill="none" width="32px" viewBox="0 0 1000 1000" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"  enable-background="new 0 0 1000 1000" xml:space="preserve">
+                <g>
+                    <g transform="translate(0.000000,511.000000) scale(0.100000,-0.100000)">
+                       <path fill="currentColor" d="M8385.3,4982.2c-341.1-83.7-694.4-430.9-753.6-741.4c-8.2-44.9-28.6-77.6-57.2-89.9c-22.5-10.2-1109-355.4-2412-765.9c-1303-410.5-2659.1-837.3-3012.4-949.7c-353.3-112.3-706.6-232.8-786.3-271.6C1055.4,2016.7,749,1706.3,567.2,1355C336.5,905.7,311.9,401.3,501.9-52.1C636.7-380.9,963.4-769,1247.3-940.5c69.4-42.9,302.3-130.7,571.9-220.6l453.4-149.1v-1296.9c0-1427.6,0-1419.4,126.6-1658.4c120.5-226.7,406.4-449.3,651.5-504.5c200.1-47,439.1-10.2,639.2,96c132.8,69.5,355.4,292.1,424.8,424.8c114.4,214.5,118.4,255.3,118.4,1329.6c0,543.3,4.1,986.4,10.2,986.4c12.3,0,2934.8-921.1,3218.7-1013c153.2-49,157.3-53.1,171.6-126.6c8.2-40.8,36.8-120.5,65.4-177.7c234.9-473.8,757.7-708.7,1221.3-551.4c236.9,79.7,494.2,308.4,604.5,537.1C9629-3052.3,9625-3215.7,9625,579c0,3880.4,6.1,3655.8-118.5,3888.6c-30.6,57.2-114.4,163.4-187.9,236.9C9061.3,4963.8,8722.2,5063.9,8385.3,4982.2z M8883.6,4345c30.6-22.5,73.5-73.5,91.9-112.3c34.7-65.3,36.8-279.8,36.8-3643.5c0-3496.5-2-3576.1-40.8-3661.9c-53.1-116.4-159.3-167.5-357.4-167.5c-198.1,0-304.3,51.1-357.4,167.5c-38.8,85.8-40.8,165.4-40.8,3661.9c0,3420.9,2,3578.2,36.8,3645.6c22.5,44.9,71.5,89.9,128.7,118.5c77.6,40.8,114.4,47,267.6,40.8C8789.6,4389.9,8836.6,4379.7,8883.6,4345z M7603,589.2c0-1823.8-8.2-2930.7-18.4-2930.7c-26.5,0-5755.3,1805.4-5900.3,1858.5c-316.6,116.4-580,412.6-667.8,745.4c-38.8,149.1-40.8,494.2-2,633.1c75.6,283.9,292.1,561.6,539.2,690.3c85.8,44.9,704.6,249.2,1668.6,553.5c843.5,265.5,2166.9,682.1,2941,929.3c776.1,245.1,1415.3,447.3,1425.5,449.3C7596.9,3517.9,7603,2200.5,7603,589.2z M3283.5-1626.8c177.7-55.1,326.8-102.1,330.9-102.1c4.1,0,6.1-498.3,6.1-1106.9c0-1015-4.1-1115.1-36.8-1178.4c-63.3-126.6-126.6-155.2-330.9-155.2s-267.5,28.6-330.9,155.2c-34.7,63.3-36.8,167.5-36.8,1290.8c0,1153.9,2,1221.3,36.8,1211.1C2940.4-1518.5,3103.8-1569.6,3283.5-1626.8z"/>
+                    </g>
+                </g>
+                </svg>
+                <span>Pengumuman</span>
+                </div>
+            </div>
+        </div>
+        <div class="row"></div>`);
+       jadwalData.claim.forEach((element, claimindex)=>{
+            let pengumuman = ``;
+            element.subjekjenjang.forEach(sj=>{
+                 let gcp = getCardPengumuman(element.judul, sj, element.bidang, claimindex);
+                 pengumuman +=` <div class="col-lg-12">
+                                    <div class="card mb-5 z-depth-0 backdecoration" style="border-radius: 10px;">
+                                        <div class="row no-gutters">
+                                            <div class="col-md-4">
+                                                <img src="${element.banner}" class="banner-jadwal-pengumuman z-depth-9" alt="#" loading="lazy">
+                                            </div>
+                                            ${gcp}
+                                        </div>
+                                    </div>
+                                </div>`;
+            });
+            SFR(".maindisp .stage2 .row").append(pengumuman);
+       });
+
+       SFR('.containerpeng').on('click', function(){
+           
+            let meta = SFR(this).getAttr('meta').split('--'),
+                claimindex = meta[1];
+                
+            kiri = SFR(this).children()[0].offset().left;
+            atas = SFR(this).children()[0].offset().top - window.pageYOffset;
+            lebar = SFR(this).children()[0].width();
+            tinggi = SFR(this).children()[0].height();
+            showload();
+            getfile(meta[0], (resp)=>{
+                hideload();
+                renderRank(resp, claimindex, meta[0]);
+            });
+       })
+    }
+    else{
+        SFR(".maindisp .stage2").html(``);
+        SFR(".maindisp .stage2").hide();
+    }
+}
+
+function getCardPengumuman(judul, sj, bidang, claimindex){
+    let disp = ``;
+    bidang.forEach(element => {
+        if(sj == element.kategori){
+            disp += `<div class="containerpeng" meta=${element.posk+'--'+claimindex}>
+                        <svg  width="20px" height="20px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M2 10V14C2 16 3 17 5 17H6.43C6.8 17 7.17 17.11 7.49 17.3L10.41 19.13C12.93 20.71 15 19.56 15 16.59V7.41003C15 4.43003 12.93 3.29003 10.41 4.87003L7.49 6.70003C7.17 6.89003 6.8 7.00003 6.43 7.00003H5C3 7.00003 2 8.00003 2 10Z" stroke="currentColor" stroke-width="1.5"></path>
+                            <path d="M18 8C19.78 10.37 19.78 13.63 18 16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                            <path d="M19.83 5.5C22.72 9.35 22.72 14.65 19.83 18.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                        <span>${element.bidang_studi}</span>
+                    </div>`;
+        }
+    })
+    
+
+    return `<div class="col-md-8">
+               <div class="header-gcp">
+                 <h4>Pengumuman ${judul}</h4>
+                 <h5>${sj}</h5>
+               </div>
+               <div class="body-gcp">
+                    ${disp}
+               </div>
+           </div>`;
+}
+
+function renderRank(rank, cindex, poskateg){
+    rankSorot = rank;
+    SFR(".overlayForm")
+    .css({
+      display: "block",
+    }).delay(10, dom=>{
+        hideScrollBody();
+        SFR(".mainform")
+        .css({
+            display: "block",
+            width: getTypeDisplay() == "laptop" ? "500px" : "100%",
+            height: getTypeDisplay() == "laptop" ? "600px" : "100%",
+            left: getTypeDisplay() == "laptop" ? "50%" : "0",
+            top: getTypeDisplay() == "laptop" ? "50%" : "0",
+            "border-radius": "10px",
+            "margin-left": getTypeDisplay() == "laptop" ? "-250px" : "0",
+            "margin-top": getTypeDisplay() == "laptop" ? "-300px" : "0",
+        }).delay(100, dom =>{
+            dom.children().forEach((item, ind) => {
+                item.children()[1].html("");
+                if (ind > 0) {
+                  item.css({
+                    left: dom.width() + "px",
+                  });
+                } else {
+                    SFR('.tema .namesrc').css({'display':'flex'});
+                    let judul = jadwalData.claim[cindex].judul, 
+                        kategori = '', disp ='';
+                    jadwalData.claim[cindex].bidang.forEach(element=>{
+                        if(poskateg == element.posk){
+                            kategori = element.bidang_studi+ ' '+element.kategori
+                        }
+                    });
+
+                    rank.forEach(element=>{
+                        disp +=`<div class="card-info z-depth-9 cdrank" id="posm${element.posm}" meta="${element.pos}-${element.pose}-${element.posm}-${cindex}-${element.posk}">
+                                    <div class="banner-info">
+                                        <img src="assets/images/icons/${(element.medali=='-' || element.medali==''?'07':element.medali)}.png">
+                                    </div>
+                                    <div class="ket-info">
+                                        <div class="ket" ${element.posm == profiles.posm? 'style="color:sandybrown;"':''}>
+                                            ${filterAin(element.nama)}
+                                        </div>
+                                        <div class="status">
+                                            ${element.prov} - ${filterAin(element.sekolah)}
+                                        </div>
+                                        <div class="medal">
+                                            ${(element.medali == ''?'Peserta Aktif':`Peraih Medali ${element.medali}`)}
+                                        </div>
+                                    </div>
+                                    <div class="info  z-depth-3">
+                                        ${element.nilai}
+                                    </div>
+                                </div>`;
+                    });
+
+                    item.css({
+                        left: "0px",
+                        })
+                        .children()[0]
+                        .children()[1]
+                        .children()[0]
+                        .html(judul)
+                        .parent()
+                        .children()[1]
+                        .html(kategori)
+                        .parent().parent().parent().children()[1].html(disp);
+                    if(SFR('#posm'+profiles.posm).length>0){
+                        setTimeout(()=>{
+                            SFR('.form1 .formbody').animateScrollTo(SFR('#posm'+profiles.posm), 300);
+                        }, 500);
+                    }
+                }
+              });
+        })
+    });
+}
+
+function sedot(mur, bundle, posk){
+    getData('jadwal',{
+        order:'jemputbundle',
+        token:getCookie('token'),
+        posbundle: bundle,
+        posk:posk
+    }, function(resp) {
+        if(resp.response =='success'){
+            setStorage(mur, resp.data);
+            hideload();
+        }
+    });
+}
